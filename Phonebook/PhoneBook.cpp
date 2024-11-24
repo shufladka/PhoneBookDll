@@ -1,43 +1,5 @@
 ﻿#include "framework.h"
 #include "PhoneBook.h"
-#include "PhoneBookLibrary.h"
-#include <fstream>
-#include <commctrl.h> // Подключаем библиотеку для работы с ListView
-
-// Структура для хранения информации о пользователе
-struct PhoneBookEntry {
-    std::wstring phone;
-    std::wstring lastName;
-    std::wstring firstName;
-    std::wstring patronymic;
-    std::wstring street;
-    std::wstring house;
-    std::wstring building;
-    std::wstring apartment;
-};
-
-#define MAX_LOADSTRING 100
-#define IDC_LISTVIEW 101 // Идентификатор для ListView
-
-// Глобальные переменные:
-HINSTANCE hInst;                                // текущий экземпляр
-WCHAR szTitle[MAX_LOADSTRING];                  // Текст строки заголовка
-WCHAR szWindowClass[MAX_LOADSTRING];            // имя класса главного окна
-HWND hwndListView;                              // Переменная для ListView
-
-// Отправить объявления функций, включенных в этот модуль кода:
-ATOM                MyRegisterClass(HINSTANCE hInstance);
-BOOL                InitInstance(HINSTANCE, int);
-LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
-INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
-BOOL                LoadPhoneBookData(HWND hwndListView);
-void                AddColumns(HWND hwndLV);
-bool                ReadPhoneBookData(const std::wstring& filename, std::vector<PhoneBookEntry>& entries);
-void                AddItem(HWND hwndLV, int index, const std::wstring& phone, const std::wstring& lastName,
-                    const std::wstring& firstName, const std::wstring& middleName, const std::wstring& street,
-                    const std::wstring& house, const std::wstring& building, const std::wstring& apartment);
-//void                AddItem(HWND hwndLV, int index, LPCWSTR phone, LPCWSTR lastName, LPCWSTR firstName, LPCWSTR patronymic, LPCWSTR street, LPCWSTR house, LPCWSTR building, LPCWSTR apartment);
-void                ResizeListView(HWND hwnd, int width, int height);
 
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -99,42 +61,12 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     return RegisterClassExW(&wcex);
 }
 
-bool FileExists(const std::wstring& filename)
-{
-    std::wifstream file(filename);
-    return file.is_open();
-}
+//bool FileExists(const std::wstring& filename)
+//{
+//    std::wifstream file(filename);
+//    return file.is_open();
+//}
 
-// Функция для чтения данных из файла
-bool ReadPhoneBookData(const std::wstring& filename, std::vector<PhoneBookEntry>& entries) {
-    std::wifstream file(filename);  // Открываем файл для чтения
-    if (!file.is_open()) {
-        return false;  // Если не удалось открыть файл
-    }
-
-    std::wstring line;
-    while (std::getline(file, line)) {
-        std::wstringstream ss(line);  // Создаём строковый поток для разбора строки
-        std::wstring phone, lastName, firstName, patronymic, street, house, building, apartment;
-
-        // Разделяем строку по символу ';'
-        std::getline(ss, phone, L';');
-        std::getline(ss, lastName, L';');
-        std::getline(ss, firstName, L';');
-        std::getline(ss, patronymic, L';');
-        std::getline(ss, street, L';');
-        std::getline(ss, house, L';');
-        std::getline(ss, building, L';');
-        std::getline(ss, apartment, L';');
-
-        // Добавляем данные в список
-        PhoneBookEntry entry = { phone, lastName, firstName, patronymic, street, house, building, apartment };
-        entries.push_back(entry);
-    }
-
-    file.close();
-    return true;
-}
 
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
@@ -278,14 +210,14 @@ void AddItem(HWND hwndLV, int index, const std::wstring& phone, const std::wstri
 BOOL LoadPhoneBookData(HWND hwndListView)
 {
     // Путь к файлу
-    std::wstring filePath = L"E:/MVSLibrary/PhoneBookDll/x64/Debug/phonebook_db.txt";
+    const WCHAR* filePath = L"E:/MVSLibrary/PhoneBookDll/x64/Debug/phonebook_db.txt";
 
     // Проверка существования файла
-    if (!FileExists(filePath))
+    /*if (!FileExists(filePath))
     {
         MessageBoxW(hwndListView, L"Файл phonebook_db.txt не найден или не доступен", L"Ошибка", MB_OK | MB_ICONERROR);
         return FALSE;
-    }
+    }*/
 
     // Чтение данных из phonebook.txt и добавление строк в ListView
     std::vector<PhoneBookEntry> phonebookData;

@@ -1,28 +1,9 @@
 #include "pch.h"
 #include "PhonebookLibrary.h"
 
-// Структура для хранения строки данных из справочника
-struct Record {
-    std::wstring phone;
-    std::wstring lastName;
-    std::wstring firstName;
-    std::wstring patronymic;
-    std::wstring street;
-    std::wstring house;
-    std::wstring building;
-    std::wstring apartment;
-};
+// Функция для чтения данных из файла
+bool ReadPhoneBookData(const WCHAR* filename, std::vector<PhoneBookEntry>& entries) {
 
-// Глобальные переменные для работы с проецированием файла
-static HANDLE hFile = NULL;
-static HANDLE hMapping = NULL;
-static wchar_t* fileData = nullptr;
-static size_t fileSize = 0;
-
-static std::vector<Record> records;
-
-// Загрузка базы данных из файла
-bool LoadDatabase(const WCHAR* filename) {
     // Открываем файл для чтения
     hFile = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE) {
@@ -51,26 +32,32 @@ bool LoadDatabase(const WCHAR* filename) {
         return false;
     }
 
-    // Парсим строки из файла
-    records.clear(); // Очищаем записи на случай повторного вызова
-    std::wistringstream fileStream(std::wstring(fileData, fileSize / sizeof(wchar_t)));
-    std::wstring line;
-    while (std::getline(fileStream, line)) {
-        std::wistringstream lineStream(line);
-        Record record;
-
-        std::getline(lineStream, record.phone, L',');
-        std::getline(lineStream, record.lastName, L',');
-        std::getline(lineStream, record.firstName, L',');
-        std::getline(lineStream, record.patronymic, L',');
-        std::getline(lineStream, record.street, L',');
-        std::getline(lineStream, record.house, L',');
-        std::getline(lineStream, record.building, L',');
-        std::getline(lineStream, record.apartment, L',');
-
-        records.push_back(record);
+    std::wifstream file(filename);  // Открываем файл для чтения
+    if (!file.is_open()) {
+        return false;  // Если не удалось открыть файл
     }
 
+    std::wstring line;
+    while (std::getline(file, line)) {
+        std::wstringstream ss(line);  // Создаём строковый поток для разбора строки
+        std::wstring phone, lastName, firstName, patronymic, street, house, building, apartment;
+
+        // Разделяем строку по символу ';'
+        std::getline(ss, phone, L';');
+        std::getline(ss, lastName, L';');
+        std::getline(ss, firstName, L';');
+        std::getline(ss, patronymic, L';');
+        std::getline(ss, street, L';');
+        std::getline(ss, house, L';');
+        std::getline(ss, building, L';');
+        std::getline(ss, apartment, L';');
+
+        // Добавляем данные в список
+        PhoneBookEntry entry = { phone, lastName, firstName, patronymic, street, house, building, apartment };
+        entries.push_back(entry);
+    }
+
+    UnloadDatabase();
     return true;
 }
 
