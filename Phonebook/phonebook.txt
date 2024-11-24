@@ -1,0 +1,2 @@
+1234567890,Ivanov,Ivan,Ivanovich,Lenina,10,1,101
+0987654321,Petrov,Petr,Petrovich,Komsomolskaya,20,2,202
