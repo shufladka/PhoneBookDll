@@ -30,6 +30,7 @@ ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+BOOL                LoadPhoneBookData(HWND hwndListView);
 void                AddColumns(HWND hwndLV);
 bool                ReadPhoneBookData(const std::wstring& filename, std::vector<PhoneBookEntry>& entries);
 void                AddItem(HWND hwndLV, int index, const std::wstring& phone, const std::wstring& lastName,
@@ -104,34 +105,6 @@ bool FileExists(const std::wstring& filename)
     return file.is_open();
 }
 
-void LoadPhoneBookData(HWND hwndListView)
-{
-    // Путь к файлу
-    std::wstring filePath = L"phonebook_db.txt";
-
-    // Проверка существования файла
-    if (!FileExists(filePath))
-    {
-        MessageBoxW(hwndListView, L"Файл phonebook_db.txt не найден или не доступен", L"Ошибка", MB_OK | MB_ICONERROR);
-        return;
-    }
-
-    // Если файл существует, считываем данные
-    std::vector<PhoneBookEntry> phonebookData;
-    if (ReadPhoneBookData(L"phonebook_db.txt", phonebookData))
-    {
-        for (size_t i = 0; i < phonebookData.size(); i++)
-        {
-            const auto& entry = phonebookData[i];  // Получаем объект PhoneBookEntry
-
-            // Передаем данные в AddItem, используя поля структуры
-            AddItem(hwndListView, i, entry.phone.c_str(), entry.lastName.c_str(), entry.firstName.c_str(),
-                entry.patronymic.c_str(), entry.street.c_str(), entry.house.c_str(), entry.building.c_str(),
-                entry.apartment.c_str());
-        }
-    }
-}
-
 // Функция для чтения данных из файла
 bool ReadPhoneBookData(const std::wstring& filename, std::vector<PhoneBookEntry>& entries) {
     std::wifstream file(filename);  // Открываем файл для чтения
@@ -194,34 +167,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
     // Добавление колонок в ListView
     AddColumns(hwndListView);
-       
-    // Путь к файлу
-    std::wstring filePath = L"E:/MVSLibrary/PhoneBookDll/x64/Debug/phonebook_db.txt";
-
-    // Проверка существования файла
-    if (!FileExists(filePath))
-    {
-        MessageBoxW(hwndListView, L"Файл phonebook_db.txt не найден или не доступен", L"Ошибка", MB_OK | MB_ICONERROR);
-        return FALSE;
-    }
-
-    // Чтение данных из phonebook.txt и добавление строк в ListView
-    std::vector<PhoneBookEntry> phonebookData;
-    if (ReadPhoneBookData(filePath, phonebookData))
-    {
-        
-        for (size_t i = 0; i < phonebookData.size(); i++)
-        {
-            const auto& entry = phonebookData[i];  // Получаем объект PhoneBookEntry
-
-            // Передаем данные в AddItem, используя поля структуры
-            AddItem(hwndListView, i, entry.phone.c_str(), entry.lastName.c_str(), entry.firstName.c_str(),
-                entry.patronymic.c_str(), entry.street.c_str(), entry.house.c_str(), entry.building.c_str(),
-                entry.apartment.c_str());
-        }
-    }
-
-    return TRUE;
+    
+    BOOL instance = LoadPhoneBookData(hwndListView);
+    return instance;
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -326,31 +274,24 @@ void AddItem(HWND hwndLV, int index, const std::wstring& phone, const std::wstri
     ListView_SetItemText(hwndLV, index, 7, const_cast<LPWSTR>(apartment.c_str()));
 }
 
-//void AddItem(HWND hwndLV, int index, LPCWSTR phone, LPCWSTR lastName, LPCWSTR firstName, LPCWSTR patronymic, LPCWSTR street, LPCWSTR house, LPCWSTR building, LPCWSTR apartment)
-//{
-//    LVITEM lvItem;
-//    lvItem.mask = LVIF_TEXT;
-//    lvItem.iItem = index;
-//    lvItem.iSubItem = 0;
-//    lvItem.pszText = (WCHAR*)phone;
-//    ListView_InsertItem(hwndLV, &lvItem);
-//
-//    // Добавление данных в подколонки
-//    ListView_SetItemText(hwndLV, index, 1, (LPWSTR)lastName);
-//    ListView_SetItemText(hwndLV, index, 2, (LPWSTR)firstName);
-//    ListView_SetItemText(hwndLV, index, 3, (LPWSTR)patronymic);
-//    ListView_SetItemText(hwndLV, index, 4, (LPWSTR)street);
-//    ListView_SetItemText(hwndLV, index, 5, (LPWSTR)house);
-//    ListView_SetItemText(hwndLV, index, 6, (LPWSTR)building);
-//    ListView_SetItemText(hwndLV, index, 7, (LPWSTR)apartment);
-//}
-
 // Инициализация данных и их добавление в ListView
-void LoadDataIntoListView(HWND hwndListView)
+BOOL LoadPhoneBookData(HWND hwndListView)
 {
-    std::vector<PhoneBookEntry> phonebookData;
-    if (ReadPhoneBookData(L"phonebook_db.txt", phonebookData))
+    // Путь к файлу
+    std::wstring filePath = L"E:/MVSLibrary/PhoneBookDll/x64/Debug/phonebook_db.txt";
+
+    // Проверка существования файла
+    if (!FileExists(filePath))
     {
+        MessageBoxW(hwndListView, L"Файл phonebook_db.txt не найден или не доступен", L"Ошибка", MB_OK | MB_ICONERROR);
+        return FALSE;
+    }
+
+    // Чтение данных из phonebook.txt и добавление строк в ListView
+    std::vector<PhoneBookEntry> phonebookData;
+    if (ReadPhoneBookData(filePath, phonebookData))
+    {
+
         for (size_t i = 0; i < phonebookData.size(); i++)
         {
             const auto& entry = phonebookData[i];  // Получаем объект PhoneBookEntry
@@ -362,10 +303,7 @@ void LoadDataIntoListView(HWND hwndListView)
         }
     }
 
-    else
-    {
-        MessageBox(hwndListView, L"Не удалось загрузить данные из файла.", L"Ошибка", MB_OK);
-    }
+    return TRUE;
 }
 
 void ResizeListView(HWND hwnd, int width, int height)
