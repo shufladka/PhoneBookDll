@@ -44,7 +44,6 @@ struct PhoneBookEntry {
     std::wstring apartment;
 };
 
-extern "C" DLL_LIB_API bool LoadDatabase(const WCHAR* filename);
 extern "C" DLL_LIB_API void UnloadDatabase();
 extern "C" DLL_LIB_API const wchar_t* SearchByPhone(const wchar_t* phone);
 extern "C" DLL_LIB_API void GetPhoneList(std::vector<std::wstring>& phoneList);

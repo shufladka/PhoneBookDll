@@ -61,12 +61,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     return RegisterClassExW(&wcex);
 }
 
-//bool FileExists(const std::wstring& filename)
-//{
-//    std::wifstream file(filename);
-//    return file.is_open();
-//}
-
 
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
@@ -141,6 +135,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     break;
     case WM_DESTROY:
+        UnloadDatabase();
         PostQuitMessage(0);
         break;
     default:
@@ -186,7 +181,7 @@ void AddColumns(HWND hwndLV)
 }
 
 void AddItem(HWND hwndLV, int index, const std::wstring& phone, const std::wstring& lastName,
-    const std::wstring& firstName, const std::wstring& middleName, const std::wstring& street,
+    const std::wstring& firstName, const std::wstring& patronymic, const std::wstring& street,
     const std::wstring& house, const std::wstring& building, const std::wstring& apartment)
 {
     LVITEM lvItem;
@@ -199,7 +194,7 @@ void AddItem(HWND hwndLV, int index, const std::wstring& phone, const std::wstri
     // Добавление данных в другие колонки
     ListView_SetItemText(hwndLV, index, 1, const_cast<LPWSTR>(lastName.c_str()));
     ListView_SetItemText(hwndLV, index, 2, const_cast<LPWSTR>(firstName.c_str()));
-    ListView_SetItemText(hwndLV, index, 3, const_cast<LPWSTR>(middleName.c_str()));
+    ListView_SetItemText(hwndLV, index, 3, const_cast<LPWSTR>(patronymic.c_str()));
     ListView_SetItemText(hwndLV, index, 4, const_cast<LPWSTR>(street.c_str()));
     ListView_SetItemText(hwndLV, index, 5, const_cast<LPWSTR>(house.c_str()));
     ListView_SetItemText(hwndLV, index, 6, const_cast<LPWSTR>(building.c_str()));
@@ -211,13 +206,6 @@ BOOL LoadPhoneBookData(HWND hwndListView)
 {
     // Путь к файлу
     const WCHAR* filePath = L"E:/MVSLibrary/PhoneBookDll/x64/Debug/phonebook_db.txt";
-
-    // Проверка существования файла
-    /*if (!FileExists(filePath))
-    {
-        MessageBoxW(hwndListView, L"Файл phonebook_db.txt не найден или не доступен", L"Ошибка", MB_OK | MB_ICONERROR);
-        return FALSE;
-    }*/
 
     // Чтение данных из phonebook.txt и добавление строк в ListView
     std::vector<PhoneBookEntry> phonebookData;

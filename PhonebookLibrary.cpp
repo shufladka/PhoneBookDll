@@ -57,7 +57,6 @@ bool ReadPhoneBookData(const WCHAR* filename, std::vector<PhoneBookEntry>& entri
         entries.push_back(entry);
     }
 
-    UnloadDatabase();
     return true;
 }
 
