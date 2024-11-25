@@ -144,11 +144,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             break;
         case OnReadFile:
             LoadDataFromMenu(hwndListView, hWnd);
+            //LoadPhoneBookData(hwndListView);
             break;
         case OnLoadDatabase:
             //LoadDataFromSharedMemory(hwndListView);
             //LoadDataFromSharedMemory();
-            ShowMemoryContents(hwndListView);  // hwndListView - это дескриптор окна, в котором будет показываться сообщение
+            //ShowMemoryContents(hwndListView);  // hwndListView - это дескриптор окна, в котором будет показываться сообщение
+            LoadPhoneBookDataToListView(hwndListView);
 
             break;
         case OnSearch:
@@ -779,6 +781,61 @@ BOOL LoadPhoneBookData(HWND hwndListView) {
     CloseHandle(hFile);
 
     MessageBoxW(hwndListView, L"Данные успешно загружены в общую память!", L"Информация", MB_OK);
+    return TRUE;
+}
+
+BOOL LoadPhoneBookDataToListView(HWND hwndListView) {
+    const WCHAR* sharedMemoryName = L"PhoneBookSharedMemory";
+    HANDLE hMapping = NULL;
+    wchar_t* sharedMemory = NULL;
+
+    // Подключаемся к существующему объекту разделяемой памяти
+    hMapping = OpenFileMappingW(FILE_MAP_READ, FALSE, sharedMemoryName);
+    if (hMapping == NULL) {
+        MessageBoxW(hwndListView, L"Не удалось подключиться к общей памяти!", L"Ошибка", MB_OK | MB_ICONERROR);
+        return FALSE;
+    }
+
+    // Мапим файл в адресное пространство
+    sharedMemory = (wchar_t*)MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0);
+    if (sharedMemory == NULL) {
+        MessageBoxW(hwndListView, L"Не удалось отобразить файл в адресное пространство!", L"Ошибка", MB_OK | MB_ICONERROR);
+        CloseHandle(hMapping);
+        return FALSE;
+    }
+
+    // Разбираем данные из общей памяти
+    std::wistringstream stream(sharedMemory);
+    std::wstring line;
+
+    int index = 0;
+    while (std::getline(stream, line)) {
+        if (line.empty()) continue; // Пропускаем пустые строки
+
+        std::wstringstream ss(line);
+        std::wstring phone, lastName, firstName, patronymic, street, house, building, apartment;
+
+        // Разделяем строку по символу ';'
+        std::getline(ss, phone, L';');
+        std::getline(ss, lastName, L';');
+        std::getline(ss, firstName, L';');
+        std::getline(ss, patronymic, L';');
+        std::getline(ss, street, L';');
+        std::getline(ss, house, L';');
+        std::getline(ss, building, L';');
+        std::getline(ss, apartment, L';');
+
+        // Добавляем данные в ListView
+        AddItem(hwndListView, index, phone.c_str(), lastName.c_str(), firstName.c_str(),
+            patronymic.c_str(), street.c_str(), house.c_str(), building.c_str(), apartment.c_str());
+        index++;
+    }
+
+    // Освобождаем ресурсы
+    UnmapViewOfFile(sharedMemory);
+    CloseHandle(hMapping);
+
+    MessageBoxW(hwndListView, L"Данные успешно загружены из общей памяти!", L"Информация", MB_OK);
     return TRUE;
 }
 

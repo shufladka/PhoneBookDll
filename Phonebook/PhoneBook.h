@@ -59,3 +59,5 @@ bool CreateSharedMemory(const WCHAR* sharedMemoryName, size_t size, wchar_t** sh
 bool ConnectToSharedMemory(const WCHAR* sharedMemoryName, wchar_t** sharedMemory);
 
 void ShowMemoryContents(HWND hwnd);
+
+BOOL LoadPhoneBookDataToListView(HWND hwndListView);
