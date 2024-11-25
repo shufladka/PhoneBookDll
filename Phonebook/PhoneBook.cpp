@@ -768,6 +768,7 @@ BOOL LoadPhoneBookData(HWND hwndListView) {
 
     // Записываем данные в общую память
     std::wifstream file(unicodeFilename);
+    file.imbue(std::locale(".1251")); // Для ANSI (Windows-1251)
     std::wstring fileContent;
     std::wstring line;
     while (std::getline(file, line)) {
