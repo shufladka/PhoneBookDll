@@ -30,7 +30,7 @@ static HANDLE hMapping = NULL;
 static wchar_t* fileData = nullptr;
 static size_t fileSize = 0;
 
-static std::vector<Record> records;
+//static std::vector<Record> records;
 
 // Структура для хранения информации о пользователе
 struct PhoneBookEntry {
@@ -44,7 +44,9 @@ struct PhoneBookEntry {
     std::wstring apartment;
 };
 
+static std::vector<PhoneBookEntry> records;
+
+extern "C" DLL_LIB_API bool LoadDatabase(const WCHAR* filename, std::vector<PhoneBookEntry>& entries);
 extern "C" DLL_LIB_API void UnloadDatabase();
-extern "C" DLL_LIB_API const wchar_t* SearchByPhone(const wchar_t* phone);
+extern "C" DLL_LIB_API std::vector<PhoneBookEntry> SearchByPhone(const std::wstring& phone, const std::vector<PhoneBookEntry>& phonebookData);
 extern "C" DLL_LIB_API void GetPhoneList(std::vector<std::wstring>& phoneList);
-extern "C" DLL_LIB_API bool ReadPhoneBookData(const WCHAR* filename, std::vector<PhoneBookEntry>& entries);

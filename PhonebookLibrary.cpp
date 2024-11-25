@@ -2,7 +2,7 @@
 #include "PhonebookLibrary.h"
 
 // Функция для чтения данных из файла
-bool ReadPhoneBookData(const WCHAR* filename, std::vector<PhoneBookEntry>& entries) {
+bool LoadDatabase(const WCHAR* filename, std::vector<PhoneBookEntry>& entries) {
 
     // Открываем файл для чтения
     hFile = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -73,20 +73,22 @@ void UnloadDatabase() {
     records.clear();
 }
 
-// Поиск записи по номеру телефона
-const wchar_t* SearchByPhone(const wchar_t* phone) {
-    static std::wstring result;
+// Функция поиска записей по номеру телефона
+std::vector<PhoneBookEntry> SearchByPhone(const std::wstring& phone, const std::vector<PhoneBookEntry>& phonebookData) {
+    std::vector<PhoneBookEntry> results;
 
-    for (const auto& record : records) {
-        if (record.phone == phone) {
-            result = record.lastName + L" " + record.firstName + L" " + record.patronymic + L", " +
-                record.street + L" " + record.house + L", " + record.building + L", " + record.apartment;
-            return result.c_str();
+    // Проходим по всем записям и ищем совпадения по номеру (подстрока)
+    for (const auto& record : phonebookData) {
+        if (record.phone.find(phone) != std::wstring::npos) { // Проверяем, содержится ли phone в record.phone
+            results.push_back(record); // Добавляем в результаты, если найдено совпадение
         }
     }
 
-    return L"Not found";
+    // Возвращаем найденные записи (массив может быть пустым, если ничего не найдено)
+    return results;
 }
+
+
 
 // Функция для получения списка всех номеров
 void GetPhoneList(std::vector<std::wstring>& phoneList) {

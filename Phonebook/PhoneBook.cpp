@@ -146,6 +146,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case OnClearedField:
             SetWindowTextA(hEditControl, "");
             break;
+        case OnSearch:
+            OnSearchByPhone(hEditControl, hwndListView);
+            break;
         default:
             return DefWindowProc(hWnd, message, wParam, lParam);
         }
@@ -182,25 +185,6 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     }
     return (INT_PTR)FALSE;
 }
-
-/*
-void AddColumns(HWND hwndLV)
-{
-    LVCOLUMN lvColumn;
-    lvColumn.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
-
-    // Добавляем колонки для таблицы
-    const WCHAR* columns[] = { L"Телефон", L"Фамилия", L"Имя", L"Отчество", L"Улица", L"Дом", L"Корпус", L"Квартира" };
-    int columnCount = sizeof(columns) / sizeof(columns[0]);
-
-    for (int i = 0; i < columnCount; i++)
-    {
-        lvColumn.pszText = (WCHAR*)columns[i];
-        lvColumn.cx = 100;  // Ширина колонки
-        ListView_InsertColumn(hwndLV, i, &lvColumn);
-    }
-}
-*/
 
 void AddColumns(HWND hwndLV)
 {
@@ -264,8 +248,7 @@ BOOL LoadPhoneBookData(HWND hwndListView)
     const WCHAR* filePath = L"E:/MVSLibrary/PhoneBookDll/x64/Debug/phonebook_db.txt";
 
     // Чтение данных из phonebook.txt и добавление строк в ListView
-    std::vector<PhoneBookEntry> phonebookData;
-    if (ReadPhoneBookData(filePath, phonebookData))
+    if (LoadDatabase(filePath, phonebookData))
     {
 
         for (size_t i = 0; i < phonebookData.size(); i++)
@@ -289,6 +272,52 @@ void ResizeListView(HWND hwnd, int width, int height)
 }
 
 void MainWndAddWidgets(HWND hwnd) {
-    hEditControl = CreateWindowA("edit", "", WS_BORDER | WS_VISIBLE | WS_CHILD, 105, 10, 400, 20, hwnd, NULL, NULL, NULL);
-    CreateWindowA("button", "Очистить поле", WS_VISIBLE | WS_CHILD | ES_CENTER, 550, 5, 200, 30, hwnd, (HMENU)OnClearedField, NULL, NULL);
+    CreateWindowA("button", "Очистить поле", WS_VISIBLE | WS_CHILD | ES_CENTER, 25, 10, 115, 20, hwnd, (HMENU)OnClearedField, NULL, NULL);
+    hEditControl = CreateWindowA("edit", "", WS_BORDER | WS_VISIBLE | WS_CHILD, 155, 10, 430, 20, hwnd, NULL, NULL, NULL);
+    CreateWindowA("button", "Поиск", WS_VISIBLE | WS_CHILD | ES_CENTER, 600, 10, 150, 20, hwnd, (HMENU)OnSearch, NULL, NULL);
 }
+
+void ClearListView(HWND hwndListView)
+{
+    // Удаляем все элементы из ListView
+    ListView_DeleteAllItems(hwndListView);
+}
+
+// Функция для извлечения текста из текстового поля и поиска записи
+void OnSearchByPhone(HWND hEditControl, HWND hListView)
+{
+    wchar_t phone[100]; // Буфер для номера телефона
+    GetWindowText(hEditControl, phone, 100); // Извлечение текста из текстового поля
+
+    // Вызов функции поиска
+    auto searchResults = SearchByPhone(phone, phonebookData);
+
+    // Очистка ListView перед добавлением результата
+    ClearListView(hListView);
+
+    if (!searchResults.empty()) {
+        // Если записи найдены, добавляем их в ListView
+        for (size_t i = 0; i < searchResults.size(); ++i) {
+            const auto& entry = searchResults[i];
+            AddItem(hListView, i, entry.phone.c_str(), entry.lastName.c_str(), entry.firstName.c_str(),
+                entry.patronymic.c_str(), entry.street.c_str(), entry.house.c_str(), entry.building.c_str(),
+                entry.apartment.c_str());
+        }
+    }
+    else {
+
+        // Если записи не найдены, показываем все записи БД
+        if (wcslen(phone) == 0) {
+            for (size_t i = 0; i < phonebookData.size(); i++)
+            {
+                const auto& entry = phonebookData[i];  // Получаем объект PhoneBookEntry
+
+                // Передаем данные в AddItem, используя поля структуры
+                AddItem(hwndListView, i, entry.phone.c_str(), entry.lastName.c_str(), entry.firstName.c_str(),
+                    entry.patronymic.c_str(), entry.street.c_str(), entry.house.c_str(), entry.building.c_str(),
+                    entry.apartment.c_str());
+            }
+        }
+    }
+}
+

@@ -8,14 +8,13 @@
 #define MAX_LOADSTRING 100
 #define IDC_LISTVIEW 101 // Идентификатор для ListView
 
-#define OnMenuClicked1	1
-#define OnMenuClicked2	2
-#define OnMenuClicked3	3
 #define OnExitProgramm	0
-#define OnClearedField	5
-#define OnReadFile		6
+#define OnClearedField	1
+#define OnSearch    	2
+#define OnReadFile		3
 
 HWND hEditControl;
+std::vector<PhoneBookEntry> phonebookData;
 
 #define TextBufferSize	1000
 
@@ -37,3 +36,5 @@ void                AddItem(HWND hwndLV, int index, const std::wstring& phone, c
                     const std::wstring& house, const std::wstring& building, const std::wstring& apartment);
 void                ResizeListView(HWND hwnd, int width, int height);
 void MainWndAddWidgets(HWND hwnd);
+void ClearListView(HWND hwndListView);
+void OnSearchByPhone(HWND hEditControl, HWND hListView);
