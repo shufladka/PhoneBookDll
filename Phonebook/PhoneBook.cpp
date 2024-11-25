@@ -150,7 +150,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             //LoadDataFromSharedMemory(hwndListView);
             //LoadDataFromSharedMemory();
             //ShowMemoryContents(hwndListView);  // hwndListView - это дескриптор окна, в котором будет показываться сообщение
-            LoadPhoneBookDataToListView(hwndListView);
+            LoadPhoneBookDataToListViewAndVector(hwndListView, phonebookData);
 
             break;
         case OnSearch:
@@ -784,7 +784,7 @@ BOOL LoadPhoneBookData(HWND hwndListView) {
     return TRUE;
 }
 
-BOOL LoadPhoneBookDataToListView(HWND hwndListView) {
+BOOL LoadPhoneBookDataToListViewAndVector(HWND hwndListView, std::vector<PhoneBookEntry>& phonebookData) {
     const WCHAR* sharedMemoryName = L"PhoneBookSharedMemory";
     HANDLE hMapping = NULL;
     wchar_t* sharedMemory = NULL;
@@ -809,6 +809,8 @@ BOOL LoadPhoneBookDataToListView(HWND hwndListView) {
     std::wstring line;
 
     int index = 0;
+    phonebookData.clear(); // Очищаем вектор перед загрузкой новых данных
+
     while (std::getline(stream, line)) {
         if (line.empty()) continue; // Пропускаем пустые строки
 
@@ -825,7 +827,16 @@ BOOL LoadPhoneBookDataToListView(HWND hwndListView) {
         std::getline(ss, building, L';');
         std::getline(ss, apartment, L';');
 
-        // Добавляем данные в ListView
+        // Создаём объект PhoneBookEntry
+        PhoneBookEntry entry = {
+            phone, lastName, firstName, patronymic,
+            street, house, building, apartment
+        };
+
+        // Добавляем запись в вектор
+        phonebookData.push_back(entry);
+
+        // Добавляем запись в ListView
         AddItem(hwndListView, index, phone.c_str(), lastName.c_str(), firstName.c_str(),
             patronymic.c_str(), street.c_str(), house.c_str(), building.c_str(), apartment.c_str());
         index++;
@@ -835,9 +846,10 @@ BOOL LoadPhoneBookDataToListView(HWND hwndListView) {
     UnmapViewOfFile(sharedMemory);
     CloseHandle(hMapping);
 
-    MessageBoxW(hwndListView, L"Данные успешно загружены из общей памяти!", L"Информация", MB_OK);
+    MessageBoxW(hwndListView, L"Данные успешно загружены из общей памяти и записаны в вектор!", L"Информация", MB_OK);
     return TRUE;
 }
+
 
 
 /*

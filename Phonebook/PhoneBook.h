@@ -60,4 +60,4 @@ bool ConnectToSharedMemory(const WCHAR* sharedMemoryName, wchar_t** sharedMemory
 
 void ShowMemoryContents(HWND hwnd);
 
-BOOL LoadPhoneBookDataToListView(HWND hwndListView);
+BOOL LoadPhoneBookDataToListViewAndVector(HWND hwndListView, std::vector<PhoneBookEntry>& phonebookData);
