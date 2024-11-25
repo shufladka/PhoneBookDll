@@ -66,18 +66,34 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
     hInst = hInstance; // Сохранить маркер экземпляра в глобальной переменной
 
+    
+    HWND hWnd = CreateWindowW(
+        szWindowClass,               // имя класса
+        szTitle,                     // заголовок окна
+        WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, // стиль окна
+        (GetSystemMetrics(SM_CXSCREEN) - 800) / 2, // Центрирование по горизонтали
+        (GetSystemMetrics(SM_CYSCREEN) - 500) / 2, // Центрирование по вертикали
+        815,                       // ширина окна
+        500,                       // высота окна
+        nullptr,                   // родительское окно
+        nullptr,                   // меню
+        hInstance,                 // экземпляр
+        nullptr                    // дополнительные данные
+    );
+    
+    /*
     HWND hWnd = CreateWindowW(
         szWindowClass,               // имя класса
         szTitle,                     // заголовок окна
         WS_OVERLAPPEDWINDOW,         // стиль окна
         CW_USEDEFAULT, CW_USEDEFAULT,// начальная позиция
-        850, 600,                    // начальные размеры окна (ширина и высота)
+        815, 500,                    // начальные размеры окна (ширина и высота)
         nullptr,                     // родительское окно
         nullptr,                     // меню
         hInstance,                   // экземпляр
         nullptr                      // дополнительные данные
     );
-
+    */
 
     if (!hWnd)
     {
@@ -88,14 +104,27 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     UpdateWindow(hWnd);
 
     // Создание ListView
-    hwndListView = CreateWindowW(WC_LISTVIEW, L"", WS_CHILD | WS_VISIBLE | LVS_REPORT,
-        10, 10, 800, 600, hWnd, (HMENU)IDC_LISTVIEW, hInstance, nullptr);
+    hwndListView = CreateWindowW(
+        WC_LISTVIEW,
+        L"",
+        WS_BORDER | WS_CHILD | WS_VISIBLE | LVS_REPORT | WS_VSCROLL | WS_HSCROLL,
+        0,
+        60,
+        800,
+        381,
+        hWnd,
+        (HMENU)IDC_LISTVIEW,
+        hInstance,
+        nullptr
+    );
+
 
     // Добавление колонок в ListView
     AddColumns(hwndListView);
     
     BOOL instance = LoadPhoneBookData(hwndListView);
     return instance;
+    //return TRUE;
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -114,26 +143,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case IDM_EXIT:
             DestroyWindow(hWnd);
             break;
+        case OnClearedField:
+            SetWindowTextA(hEditControl, "");
+            break;
         default:
             return DefWindowProc(hWnd, message, wParam, lParam);
         }
+        break;
     }
-    break;
-    case WM_PAINT:
-    {
-        PAINTSTRUCT ps;
-        HDC hdc = BeginPaint(hWnd, &ps);
-        EndPaint(hWnd, &ps);
-    }
-    break;
-    case WM_SIZE:
-    {
-        int width = LOWORD(lParam);
-        int height = HIWORD(lParam);
-        // Перемещаем и изменяем размер ListView при изменении размера окна
-        ResizeListView(hWnd, width - 20, height - 20); // Учитываем отступы
-    }
-    break;
+    case WM_CREATE: 
+        MainWndAddWidgets(hWnd);
+        break;
     case WM_DESTROY:
         UnloadDatabase();
         PostQuitMessage(0);
@@ -163,6 +183,7 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     return (INT_PTR)FALSE;
 }
 
+/*
 void AddColumns(HWND hwndLV)
 {
     LVCOLUMN lvColumn;
@@ -179,6 +200,41 @@ void AddColumns(HWND hwndLV)
         ListView_InsertColumn(hwndLV, i, &lvColumn);
     }
 }
+*/
+
+void AddColumns(HWND hwndLV)
+{
+    LVCOLUMN lvColumn;
+    lvColumn.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
+
+    // Описание колонок: текст и ширина
+    struct ColumnInfo {
+        int width;         // Ширина колонки
+        const WCHAR* name; // Имя колонки
+    };
+
+    ColumnInfo columns[] = {
+        { 100, L"Телефон" },
+        { 100, L"Фамилия" },
+        { 100, L"Имя" },
+        { 100, L"Отчество" },
+        { 100, L"Улица", },
+        { 100, L"Дом" },
+        { 100, L"Корпус" },
+        { 100, L"Квартира" }
+    };
+
+    int columnCount = sizeof(columns) / sizeof(columns[0]);
+
+    // Добавление колонок в ListView
+    for (int i = 0; i < columnCount; ++i)
+    {
+        lvColumn.pszText = const_cast<LPWSTR>(columns[i].name);
+        lvColumn.cx = columns[i].width;
+        ListView_InsertColumn(hwndLV, i, &lvColumn);
+    }
+}
+
 
 void AddItem(HWND hwndLV, int index, const std::wstring& phone, const std::wstring& lastName,
     const std::wstring& firstName, const std::wstring& patronymic, const std::wstring& street,
@@ -230,4 +286,9 @@ void ResizeListView(HWND hwnd, int width, int height)
 {
     // Устанавливаем новые размеры для ListView
     MoveWindow(hwndListView, 10, 10, width, height, TRUE);
+}
+
+void MainWndAddWidgets(HWND hwnd) {
+    hEditControl = CreateWindowA("edit", "", WS_BORDER | WS_VISIBLE | WS_CHILD, 105, 10, 400, 20, hwnd, NULL, NULL, NULL);
+    CreateWindowA("button", "Очистить поле", WS_VISIBLE | WS_CHILD | ES_CENTER, 550, 5, 200, 30, hwnd, (HMENU)OnClearedField, NULL, NULL);
 }

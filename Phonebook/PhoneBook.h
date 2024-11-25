@@ -5,20 +5,19 @@
 #include <fstream>
 #include <commctrl.h>
 
-// Структура для хранения информации о пользователе
-//struct PhoneBookEntry {
-//    std::wstring phone;
-//    std::wstring lastName;
-//    std::wstring firstName;
-//    std::wstring patronymic;
-//    std::wstring street;
-//    std::wstring house;
-//    std::wstring building;
-//    std::wstring apartment;
-//};
-
 #define MAX_LOADSTRING 100
 #define IDC_LISTVIEW 101 // Идентификатор для ListView
+
+#define OnMenuClicked1	1
+#define OnMenuClicked2	2
+#define OnMenuClicked3	3
+#define OnExitProgramm	0
+#define OnClearedField	5
+#define OnReadFile		6
+
+HWND hEditControl;
+
+#define TextBufferSize	1000
 
 // Глобальные переменные:
 HINSTANCE hInst;                                // текущий экземпляр
@@ -37,3 +36,4 @@ void                AddItem(HWND hwndLV, int index, const std::wstring& phone, c
                     const std::wstring& firstName, const std::wstring& middleName, const std::wstring& street,
                     const std::wstring& house, const std::wstring& building, const std::wstring& apartment);
 void                ResizeListView(HWND hwnd, int width, int height);
+void MainWndAddWidgets(HWND hwnd);
