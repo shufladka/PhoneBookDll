@@ -66,7 +66,17 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
     hInst = hInstance; // Сохранить маркер экземпляра в глобальной переменной
 
-    
+    /*
+    // Шаг 1: Создание меню
+    HMENU hMenu = CreateMenu();
+    HMENU hSubMenu = CreatePopupMenu();
+
+    // Добавляем пункты меню
+    AppendMenuW(hSubMenu, MF_STRING, OnClearedField, L"&Очистить");
+    //AppendMenuW(hSubMenu, MF_STRING, ID_FILE_EXIT, L"E&xit");
+    AppendMenuW(hMenu, MF_POPUP, (UINT_PTR)hSubMenu, L"&File");
+    */
+
     HWND hWnd = CreateWindowW(
         szWindowClass,               // имя класса
         szTitle,                     // заголовок окна
@@ -80,20 +90,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
         hInstance,                 // экземпляр
         nullptr                    // дополнительные данные
     );
-    
-    /*
-    HWND hWnd = CreateWindowW(
-        szWindowClass,               // имя класса
-        szTitle,                     // заголовок окна
-        WS_OVERLAPPEDWINDOW,         // стиль окна
-        CW_USEDEFAULT, CW_USEDEFAULT,// начальная позиция
-        815, 500,                    // начальные размеры окна (ширина и высота)
-        nullptr,                     // родительское окно
-        nullptr,                     // меню
-        hInstance,                   // экземпляр
-        nullptr                      // дополнительные данные
-    );
-    */
 
     if (!hWnd)
     {
@@ -122,9 +118,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     // Добавление колонок в ListView
     AddColumns(hwndListView);
     
-    BOOL instance = LoadPhoneBookData(hwndListView);
-    return instance;
-    //return TRUE;
+    //BOOL instance = LoadPhoneBookData(hwndListView);
+    //return instance;
+    return TRUE;
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -146,6 +142,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case OnClearedField:
             SetWindowTextA(hEditControl, "");
             break;
+        case OnReadFile:
+            LoadDataFromMenu(hwndListView, hWnd);
+            //LoadPhoneBookData(hwndListView);
+            break;
         case OnSearch:
             OnSearchByPhone(hEditControl, hwndListView);
             break;
@@ -155,6 +155,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     case WM_CREATE: 
+        MainWndAddMenues(hWnd);
         MainWndAddWidgets(hWnd);
         break;
     case WM_DESTROY:
@@ -242,27 +243,50 @@ void AddItem(HWND hwndLV, int index, const std::wstring& phone, const std::wstri
 }
 
 // Инициализация данных и их добавление в ListView
-BOOL LoadPhoneBookData(HWND hwndListView)
-{
-    // Путь к файлу
-    const WCHAR* filePath = L"E:/MVSLibrary/PhoneBookDll/x64/Debug/phonebook_db.txt";
+//BOOL LoadPhoneBookData(HWND hwndListView)
+//{
+//    // Путь к файлу
+//    const WCHAR* filePath = L"E:/MVSLibrary/PhoneBookDll/x64/Debug/phonebook_db.txt";
+//
+//    // Чтение данных из phonebook.txt и добавление строк в ListView
+//    if (LoadDatabase(filePath, phonebookData))
+//    {
+//
+//        for (size_t i = 0; i < phonebookData.size(); i++)
+//        {
+//            const auto& entry = phonebookData[i];  // Получаем объект PhoneBookEntry
+//
+//            // Передаем данные в AddItem, используя поля структуры
+//            AddItem(hwndListView, i, entry.phone.c_str(), entry.lastName.c_str(), entry.firstName.c_str(),
+//                entry.patronymic.c_str(), entry.street.c_str(), entry.house.c_str(), entry.building.c_str(),
+//                entry.apartment.c_str());
+//        }
+//    }
+//
+//    return TRUE;
+//}
+BOOL LoadPhoneBookData(HWND hwndListView) {
+    // Преобразуем строку пути к файлу из ANSI в Unicode
+    WCHAR unicodeFilename[MAX_PATH] = { 0 };
+    ConvertToUnicode(filename, unicodeFilename, sizeof(unicodeFilename) / sizeof(WCHAR));
 
-    // Чтение данных из phonebook.txt и добавление строк в ListView
-    if (LoadDatabase(filePath, phonebookData))
-    {
-
-        for (size_t i = 0; i < phonebookData.size(); i++)
-        {
-            const auto& entry = phonebookData[i];  // Получаем объект PhoneBookEntry
-
-            // Передаем данные в AddItem, используя поля структуры
+    // Теперь передаем в LoadDatabase строку в формате WCHAR
+    if (LoadDatabase(unicodeFilename, phonebookData)) {
+        // Проходим по всем данным и добавляем их в ListView
+        for (size_t i = 0; i < phonebookData.size(); i++) {
+            const auto& entry = phonebookData[i];
             AddItem(hwndListView, i, entry.phone.c_str(), entry.lastName.c_str(), entry.firstName.c_str(),
                 entry.patronymic.c_str(), entry.street.c_str(), entry.house.c_str(), entry.building.c_str(),
                 entry.apartment.c_str());
         }
+        return TRUE;
     }
+    return FALSE;
+}
 
-    return TRUE;
+// Преобразование строки из ANSI в Unicode
+void ConvertToUnicode(const char* ansiStr, WCHAR* unicodeStr, size_t unicodeStrSize) {
+    MultiByteToWideChar(CP_ACP, 0, ansiStr, -1, unicodeStr, unicodeStrSize);
 }
 
 void ResizeListView(HWND hwnd, int width, int height)
@@ -270,6 +294,50 @@ void ResizeListView(HWND hwnd, int width, int height)
     // Устанавливаем новые размеры для ListView
     MoveWindow(hwndListView, 10, 10, width, height, TRUE);
 }
+
+void MainWndAddMenues(HWND hwnd) {
+    HMENU RootMenu = CreateMenu();
+    HMENU SubMenu = CreateMenu();
+
+    AppendMenu(SubMenu, MF_POPUP, OnClearedField, L"Clear");
+    AppendMenu(SubMenu, MF_SEPARATOR, NULL, NULL);
+    AppendMenu(SubMenu, MF_STRING, OnReadFile, L"Load");
+    AppendMenu(SubMenu, MF_SEPARATOR, NULL, NULL);
+    AppendMenu(SubMenu, MF_STRING, OnExitProgramm, L"Exit");
+
+    AppendMenu(RootMenu, MF_POPUP, (UINT_PTR)SubMenu, L"File");
+    AppendMenu(RootMenu, MF_STRING, (UINT_PTR)SubMenu, L"Help");
+
+    SetMenu(hwnd, RootMenu);
+}
+
+// Функция для инициализации структуры OPENFILENAME
+void SetOpenFileParams(HWND hwnd) {
+    ZeroMemory(&ofn, sizeof(ofn));
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hwnd;
+    ofn.lpstrFile = filename;
+    ofn.lpstrFile[0] = '\0'; // Начальное значение пути
+    ofn.nMaxFile = sizeof(filename);
+    ofn.lpstrFilter = "Text Files\0*.TXT\0All Files\0*.*\0";
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = NULL;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+}
+
+// Функция для обработки загрузки файла
+void LoadDataFromMenu(HWND hwndListView, HWND hwndOwner) {
+    SetOpenFileParams(hwndOwner);
+    if (GetOpenFileNameA(&ofn)) {
+        if (!LoadPhoneBookData(hwndListView)) {
+            MessageBox(hwndOwner, L"Failed to load data from file.", L"Error", MB_OK | MB_ICONERROR);
+        }
+    }
+}
+
 
 void MainWndAddWidgets(HWND hwnd) {
     CreateWindowA("button", "Очистить поле", WS_VISIBLE | WS_CHILD | ES_CENTER, 25, 10, 115, 20, hwnd, (HMENU)OnClearedField, NULL, NULL);

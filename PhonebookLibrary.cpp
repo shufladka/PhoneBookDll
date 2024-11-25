@@ -88,12 +88,15 @@ std::vector<PhoneBookEntry> SearchByPhone(const std::wstring& phone, const std::
     return results;
 }
 
-
-
 // Функция для получения списка всех номеров
-void GetPhoneList(std::vector<std::wstring>& phoneList) {
-    phoneList.clear();
-    for (const auto& record : records) {
-        phoneList.push_back(std::wstring(record.phone.begin(), record.phone.end()));
+std::vector<PhoneBookEntry> GetPhoneList(const std::vector<PhoneBookEntry>& phonebookData) {
+    std::vector<PhoneBookEntry> results;
+
+    // Проходим по всем записям
+    for (const auto& record : phonebookData) {
+        results.push_back(record); // Добавляем в результаты
     }
+
+    // Возвращаем найденные записи (массив может быть пустым, если ничего не найдено)
+    return results;
 }

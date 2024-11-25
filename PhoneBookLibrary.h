@@ -49,4 +49,4 @@ static std::vector<PhoneBookEntry> records;
 extern "C" DLL_LIB_API bool LoadDatabase(const WCHAR* filename, std::vector<PhoneBookEntry>& entries);
 extern "C" DLL_LIB_API void UnloadDatabase();
 extern "C" DLL_LIB_API std::vector<PhoneBookEntry> SearchByPhone(const std::wstring& phone, const std::vector<PhoneBookEntry>& phonebookData);
-extern "C" DLL_LIB_API void GetPhoneList(std::vector<std::wstring>& phoneList);
+extern "C" DLL_LIB_API std::vector<PhoneBookEntry> GetPhoneList(const std::vector<PhoneBookEntry>& phonebookData);
