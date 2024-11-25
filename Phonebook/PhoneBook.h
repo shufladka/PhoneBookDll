@@ -13,6 +13,7 @@
 #define OnClearedField	1
 #define OnSearch    	2
 #define OnReadFile		3
+#define OnLoadDatabase  4
 
 HWND hEditControl;
 std::vector<PhoneBookEntry> phonebookData;
@@ -46,3 +47,15 @@ void OnSearchByPhone(HWND hEditControl, HWND hListView);
 void SetOpenFileParams(HWND hwnd);
 void LoadDataFromMenu(HWND hwndListView, HWND hwndOwner);
 void ConvertToUnicode(const char* ansiStr, WCHAR* unicodeStr, size_t unicodeStrSize);
+//void InitializeSharedMemory(HWND hWnd);
+//void LoadDataFromSharedMemory(HWND hwndListView);
+void LoadDataFromSharedMemory();
+
+void CleanupSharedMemory();
+void ReadFromSharedMemory(wchar_t* sharedMemory, HWND hwndListView);
+void InitializeSharedMemory(HWND hWnd);
+
+bool CreateSharedMemory(const WCHAR* sharedMemoryName, size_t size, wchar_t** sharedMemory);
+bool ConnectToSharedMemory(const WCHAR* sharedMemoryName, wchar_t** sharedMemory);
+
+void ShowMemoryContents(HWND hwnd);
