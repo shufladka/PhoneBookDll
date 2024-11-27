@@ -114,12 +114,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
         nullptr
     );
 
-
     // Добавление колонок в ListView
     AddColumns(hwndListView);
     
-    //BOOL instance = LoadPhoneBookData(hwndListView);
-    //return instance;
     return TRUE;
 }
 
@@ -177,270 +174,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-/*
-void InitializeSharedMemory(HWND hWnd) {
-    const WCHAR* sharedMemoryName = L"PhoneBookSharedMemory";
-    bool isFirstInstance = false;
-
-    // Попробуем открыть существующее отображение памяти
-    HANDLE hMapping = OpenFileMappingW(FILE_MAP_ALL_ACCESS, FALSE, sharedMemoryName);
-    if (hMapping == NULL) {
-        // Если отображение памяти не существует, создаём его
-        hMapping = CreateFileMappingW(
-            INVALID_HANDLE_VALUE,
-            NULL,
-            PAGE_READWRITE,
-            0,
-            MAX_MEMORY_SIZE, // Максимальный размер памяти
-            sharedMemoryName
-        );
-
-        if (hMapping == NULL) {
-            MessageBoxW(hWnd, L"Не удалось создать общую память!", L"Ошибка", MB_OK | MB_ICONERROR);
-            return;
-        }
-
-        isFirstInstance = true;
-    }
-
-    // Мапим память в адресное пространство процесса
-    wchar_t* sharedMemory = (wchar_t*)MapViewOfFile(
-        hMapping,
-        FILE_MAP_ALL_ACCESS,
-        0,
-        0,
-        0
-    );
-
-    if (sharedMemory == NULL) {
-        MessageBoxW(hWnd, L"Не удалось отобразить память в адресное пространство!", L"Ошибка", MB_OK | MB_ICONERROR);
-        CloseHandle(hMapping);
-        return;
-    }
-    */
-
-    // Если это первый экземпляр, загружаем данные из файла в память
-    //if (isFirstInstance) {
-    //    std::wstring filePath = L"E:/MVSLibrary/PhoneBookDll/x64/Debug/phonebook_db.txt";
-    //    std::wifstream file(filePath);
-
-    //    if (!file.is_open()) {
-    //        MessageBoxW(hWnd, L"Не удалось открыть файл базы данных!", L"Ошибка", MB_OK | MB_ICONERROR);
-    //    }
-    //    else {
-    //        // Считываем содержимое файла в разделяемую память
-    //        std::wstring fileData((std::istreambuf_iterator<wchar_t>(file)),
-    //            std::istreambuf_iterator<wchar_t>());
-    //        wcscpy_s(sharedMemory, MAX_MEMORY_SIZE / sizeof(wchar_t), fileData.c_str());
-    //    }
-    //}
-//}
-
-/*
-void LoadDataFromSharedMemory(HWND hwndListView) {
-    const WCHAR* sharedMemoryName = L"PhoneBookSharedMemory";
-
-    // Подключаемся к существующему файлу отображения памяти
-    HANDLE hMapping = OpenFileMappingW(FILE_MAP_READ, FALSE, sharedMemoryName);
-    if (hMapping == NULL) {
-        MessageBoxW(hwndListView, L"Не удалось подключиться к общей памяти!", L"Ошибка", MB_OK | MB_ICONERROR);
-        return;
-    }
-
-    // Мапим память в адресное пространство процесса
-    wchar_t* sharedMemory = (wchar_t*)MapViewOfFile(
-        hMapping,
-        FILE_MAP_READ,
-        0,
-        0,
-        0
-    );
-
-    if (sharedMemory == NULL) {
-        MessageBoxW(hwndListView, L"Не удалось отобразить память в адресное пространство!", L"Ошибка", MB_OK | MB_ICONERROR);
-        CloseHandle(hMapping);
-        return;
-    }
-
-    // Разбираем данные из памяти и добавляем их в ListView
-    std::wstringstream dataStream(sharedMemory);
-    std::wstring line;
-    while (std::getline(dataStream, line)) {
-        std::wstringstream ss(line);
-        std::wstring phone, lastName, firstName, patronymic, street, house, building, apartment;
-
-        std::getline(ss, phone, L';');
-        std::getline(ss, lastName, L';');
-        std::getline(ss, firstName, L';');
-        std::getline(ss, patronymic, L';');
-        std::getline(ss, street, L';');
-        std::getline(ss, house, L';');
-        std::getline(ss, building, L';');
-        std::getline(ss, apartment, L';');
-
-        PhoneBookEntry entry = { phone, lastName, firstName, patronymic, street, house, building, apartment };
-        AddItem(hwndListView, phonebookData.size(), entry.phone.c_str(), entry.lastName.c_str(),
-            entry.firstName.c_str(), entry.patronymic.c_str(), entry.street.c_str(),
-            entry.house.c_str(), entry.building.c_str(), entry.apartment.c_str());
-    }
-
-    // Закрываем отображение памяти
-    UnmapViewOfFile(sharedMemory);
-    CloseHandle(hMapping);
-}
-*/
-
-// Функция для создания общей памяти
-bool CreateSharedMemory(const WCHAR* sharedMemoryName, size_t size, wchar_t** sharedMemory) {
-    // Создаем объект общей памяти
-    HANDLE hMapping = CreateFileMappingW(
-        INVALID_HANDLE_VALUE,    // Используем анонимный файл
-        NULL,                    // Атрибуты безопасности
-        PAGE_READWRITE,          // Права доступа
-        0,                       // Старший 32 бита размера
-        size,                    // Младший 32 бита размера
-        sharedMemoryName         // Имя объекта общей памяти
-    );
-
-    if (hMapping == NULL) {
-        return false; // Не удалось создать объект общей памяти
-    }
-
-    // Мапим память в адресное пространство
-    *sharedMemory = (wchar_t*)MapViewOfFile(
-        hMapping,
-        FILE_MAP_READ | FILE_MAP_WRITE, // Права доступа
-        0,
-        0,
-        0
-    );
-
-    if (*sharedMemory == NULL) {
-        CloseHandle(hMapping);
-        return false; // Не удалось мапировать память
-    }
-
-    return true;
-}
-
-// Функция для подключения к существующему объекту общей памяти
-bool ConnectToSharedMemory(const WCHAR* sharedMemoryName, wchar_t** sharedMemory) {
-    HANDLE hMapping = OpenFileMappingW(FILE_MAP_READ, FALSE, sharedMemoryName);
-    if (hMapping == NULL) {
-        return false; // Не удалось подключиться
-    }
-
-    *sharedMemory = (wchar_t*)MapViewOfFile(
-        hMapping,
-        FILE_MAP_READ,
-        0,
-        0,
-        0
-    );
-
-    CloseHandle(hMapping); // Закрываем хендл объекта, так как мы уже мапили память
-
-    return *sharedMemory != NULL; // Успех, если память была мапирована
-}
-
-/*
-void LoadDataFromSharedMemory(HWND hwndListView) {
-    const WCHAR* sharedMemoryName = L"PhoneBookSharedMemory";
-
-    // Подключаемся к существующему объекту разделяемой памяти
-    HANDLE hMapping = OpenFileMappingW(FILE_MAP_READ, FALSE, sharedMemoryName);
-    if (hMapping == NULL) {
-        MessageBoxW(hwndListView, L"Не удалось подключиться к общей памяти!", L"Ошибка", MB_OK | MB_ICONERROR);
-        return;
-    }
-    else {
-        MessageBoxW(hwndListView, L"Удалось подключиться к общей памяти!", L"Не ошибка", MB_OK | MB_ICONERROR);
-        return;
-    }
-
-    // Мапим память в адресное пространство процесса
-    wchar_t* sharedMemory = (wchar_t*)MapViewOfFile(
-        hMapping,
-        FILE_MAP_READ,
-        0,
-        0,
-        0
-    );
-
-    if (sharedMemory == NULL) {
-        MessageBoxW(hwndListView, L"Не удалось отобразить память в адресное пространство!", L"Ошибка", MB_OK | MB_ICONERROR);
-        CloseHandle(hMapping);
-        return;
-    }
-
-    // Читаем данные из памяти
-    ReadFromSharedMemory(sharedMemory, hwndListView);
-
-    // Закрываем отображение памяти
-    UnmapViewOfFile(sharedMemory);
-    CloseHandle(hMapping);
-}
-*/
-/*
-// Функция загрузки данных из общей памяти
-void LoadDataFromSharedMemory(HWND hwndListView) {
-    const WCHAR* sharedMemoryName = L"PhoneBookSharedMemory";
-
-    // Для первого экземпляра программы создаём общую память, если её ещё нет
-    wchar_t* sharedMemory = nullptr;
-    if (!ConnectToSharedMemory(sharedMemoryName, &sharedMemory)) {
-        if (!CreateSharedMemory(sharedMemoryName, MAX_MEMORY_SIZE, &sharedMemory)) {
-            MessageBoxW(hwndListView, L"Не удалось подключиться или создать общую память!", L"Ошибка", MB_OK | MB_ICONERROR);
-            return;
-        }
-    }
-
-    // Если память успешно подключена, читаем данные
-    if (sharedMemory) {
-        MessageBoxW(hwndListView, L"Удалось подключиться к общей памяти!", L"Информация", MB_OK);
-        // Чтение данных
-        ReadFromSharedMemory(sharedMemory, hwndListView);
-    }
-    else {
-        MessageBoxW(hwndListView, L"Не удалось подключиться к общей памяти!", L"Ошибка", MB_OK | MB_ICONERROR);
-    }
-
-    // Закрытие общего доступа
-    //UnmapViewOfFile(sharedMemory);
-}
-*/
-void LoadDataFromSharedMemory() {
-    const WCHAR* sharedMemoryName = L"PhoneBookSharedMemory";
-
-    // Подключаемся к существующему объекту общей памяти
-    HANDLE hMapping = OpenFileMappingW(FILE_MAP_READ, FALSE, sharedMemoryName);
-    if (hMapping == NULL) {
-        MessageBoxW(NULL, L"Не удалось подключиться к общей памяти!", L"Ошибка", MB_OK | MB_ICONERROR);
-        return;
-    }
-
-    // Мапим память в адресное пространство
-    void* sharedMemory = MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0);
-    if (sharedMemory == NULL) {
-        MessageBoxW(NULL, L"Не удалось отобразить память в адресное пространство!", L"Ошибка", MB_OK | MB_ICONERROR);
-        CloseHandle(hMapping);
-        return;
-    }
-
-    // Читаем данные из общей памяти
-    PhoneBookEntry* entries = (PhoneBookEntry*)sharedMemory;
-    for (int i = 0; i < MAX_RECORDS; ++i) {
-        // Здесь вы можете добавить код для вывода или обработки записей
-        wprintf(L"Phone: %s\n", entries[i].phone.c_str());
-    }
-
-    // Закрываем все
-    //UnmapViewOfFile(sharedMemory);
-    //CloseHandle(hMapping);
-}
-
-
-
+// Освобождение ресурсов
 void CleanupSharedMemory() {
     if (sharedMemory != NULL) {
         UnmapViewOfFile(sharedMemory);
@@ -451,6 +185,7 @@ void CleanupSharedMemory() {
     }
 }
 
+// Инициализация общей памяти
 void InitializeSharedMemory(HWND hWnd) {
     const WCHAR* sharedMemoryName = L"PhoneBookSharedMemory";
     bool isFirstInstance = false;
@@ -492,105 +227,7 @@ void InitializeSharedMemory(HWND hWnd) {
         CloseHandle(hMapping);
         return;
     }
-
-    // Если это первый экземпляр, загружаем данные в память
-    /*if (isFirstInstance) {
-        std::wstring filePath = L"E:/MVSLibrary/PhoneBookDll/x64/Debug/phonebook_db.txt";
-        if (!WriteToSharedMemory(filePath, sharedMemory, MAX_MEMORY_SIZE)) {
-            MessageBoxW(hWnd, L"Не удалось записать данные в общую память!", L"Ошибка", MB_OK | MB_ICONERROR);
-        }
-        else {
-            MessageBoxW(hWnd, L"Удалось записать данные в общую память!", L"Не ошибка", MB_OK | MB_ICONERROR);
-        }
-    }*/
-
-    // Закрываем объект отображения памяти (но разделяемая память остаётся доступной)
-    //UnmapViewOfFile(sharedMemory);
-    //CloseHandle(hMapping);
 }
-
-
-/*
-void ReadFromSharedMemory(wchar_t* sharedMemory, HWND hwndListView) {
-    if (sharedMemory == nullptr) {
-        MessageBoxW(hwndListView, L"Ошибка: общая память пуста.", L"Ошибка", MB_OK | MB_ICONERROR);
-        return;
-    }
-
-    // Пример вывода первого блока данных из общей памяти
-    MessageBoxW(hwndListView, sharedMemory, L"Данные из общей памяти", MB_OK);
-
-    // Понимание структуры данных, прочтите их по частям
-    std::wstring data(sharedMemory);
-    MessageBoxW(hwndListView, data.c_str(), L"Чтение из памяти", MB_OK);
-
-    std::wstringstream dataStream(sharedMemory);
-    std::wstring line;
-
-    while (std::getline(dataStream, line)) {
-        std::wstringstream ss(line);
-        std::wstring phone, lastName, firstName, patronymic, street, house, building, apartment;
-
-        // Разделяем строку на части
-        std::getline(ss, phone, L';');
-        std::getline(ss, lastName, L';');
-        std::getline(ss, firstName, L';');
-        std::getline(ss, patronymic, L';');
-        std::getline(ss, street, L';');
-        std::getline(ss, house, L';');
-        std::getline(ss, building, L';');
-        std::getline(ss, apartment, L';');
-
-        // Добавляем данные в ListView
-        AddItem(hwndListView, phonebookData.size(), phone.c_str(), lastName.c_str(),
-            firstName.c_str(), patronymic.c_str(), street.c_str(), house.c_str(),
-            building.c_str(), apartment.c_str());
-    }
-}
-*/
-
-void ReadFromSharedMemory(wchar_t* sharedMemory, HWND hwndListView) {
-    if (sharedMemory == nullptr) {
-        MessageBoxW(hwndListView, L"Ошибка: общая память пуста.", L"Ошибка", MB_OK | MB_ICONERROR);
-        return;
-    }
-
-    // Прочитаем данные и выведем в MessageBox
-    size_t index = 0;
-    std::wstring phone, lastName, firstName, patronymic, street, house, building, apartment;
-    for (size_t i = 0; i < phonebookData.size(); ++i) {
-        phone = sharedMemory + index;
-        index += MAX_ENTRY_SIZE;
-
-        lastName = sharedMemory + index;
-        index += MAX_ENTRY_SIZE;
-
-        firstName = sharedMemory + index;
-        index += MAX_ENTRY_SIZE;
-
-        patronymic = sharedMemory + index;
-        index += MAX_ENTRY_SIZE;
-
-        street = sharedMemory + index;
-        index += MAX_ENTRY_SIZE;
-
-        house = sharedMemory + index;
-        index += MAX_ENTRY_SIZE;
-
-        building = sharedMemory + index;
-        index += MAX_ENTRY_SIZE;
-
-        apartment = sharedMemory + index;
-        index += MAX_ENTRY_SIZE;
-
-        MessageBoxW(hwndListView, phone.c_str(), L"Phone", MB_OK);
-        MessageBoxW(hwndListView, lastName.c_str(), L"Last Name", MB_OK);
-        // Выведите другие поля аналогично
-    }
-}
-
-
-
 
 
 INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -645,7 +282,6 @@ void AddColumns(HWND hwndLV)
         ListView_InsertColumn(hwndLV, i, &lvColumn);
     }
 }
-
 
 void AddItem(HWND hwndLV, int index, const std::wstring& phone, const std::wstring& lastName,
     const std::wstring& firstName, const std::wstring& patronymic, const std::wstring& street,
@@ -703,29 +339,6 @@ void ShowMemoryContents(HWND hwnd) {
 
 
 // Инициализация данных и их добавление в ListView
-//BOOL LoadPhoneBookData(HWND hwndListView)
-//{
-//    // Путь к файлу
-//    const WCHAR* filePath = L"E:/MVSLibrary/PhoneBookDll/x64/Debug/phonebook_db.txt";
-//
-//    // Чтение данных из phonebook.txt и добавление строк в ListView
-//    if (LoadDatabase(filePath, phonebookData))
-//    {
-//
-//        for (size_t i = 0; i < phonebookData.size(); i++)
-//        {
-//            const auto& entry = phonebookData[i];  // Получаем объект PhoneBookEntry
-//
-//            // Передаем данные в AddItem, используя поля структуры
-//            AddItem(hwndListView, i, entry.phone.c_str(), entry.lastName.c_str(), entry.firstName.c_str(),
-//                entry.patronymic.c_str(), entry.street.c_str(), entry.house.c_str(), entry.building.c_str(),
-//                entry.apartment.c_str());
-//        }
-//    }
-//
-//    return TRUE;
-//}
-
 BOOL LoadPhoneBookData(HWND hwndListView) {
     const WCHAR* sharedMemoryName = L"PhoneBookSharedMemory";
     HANDLE hFile = INVALID_HANDLE_VALUE;
@@ -857,37 +470,9 @@ BOOL LoadPhoneBookDataToListViewAndVector(HWND hwndListView, std::vector<PhoneBo
 }
 
 
-
-/*
-BOOL LoadPhoneBookData(HWND hwndListView) {
-    // Преобразуем строку пути к файлу из ANSI в Unicode
-    WCHAR unicodeFilename[MAX_PATH] = { 0 };
-    ConvertToUnicode(filename, unicodeFilename, sizeof(unicodeFilename) / sizeof(WCHAR));
-
-    // Теперь передаем в LoadDatabase строку в формате WCHAR
-    if (LoadDatabase(unicodeFilename, phonebookData)) {
-        // Проходим по всем данным и добавляем их в ListView
-        for (size_t i = 0; i < phonebookData.size(); i++) {
-            const auto& entry = phonebookData[i];
-            AddItem(hwndListView, i, entry.phone.c_str(), entry.lastName.c_str(), entry.firstName.c_str(),
-                entry.patronymic.c_str(), entry.street.c_str(), entry.house.c_str(), entry.building.c_str(),
-                entry.apartment.c_str());
-        }
-        return TRUE;
-    }
-    return FALSE;
-}
-*/
-
 // Преобразование строки из ANSI в Unicode
 void ConvertToUnicode(const char* ansiStr, WCHAR* unicodeStr, size_t unicodeStrSize) {
     MultiByteToWideChar(CP_ACP, 0, ansiStr, -1, unicodeStr, unicodeStrSize);
-}
-
-void ResizeListView(HWND hwnd, int width, int height)
-{
-    // Устанавливаем новые размеры для ListView
-    MoveWindow(hwndListView, 10, 10, width, height, TRUE);
 }
 
 void MainWndAddMenues(HWND hwnd) {
@@ -933,7 +518,6 @@ void LoadDataFromMenu(HWND hwndListView, HWND hwndOwner) {
         }
     }
 }
-
 
 void MainWndAddWidgets(HWND hwnd) {
     CreateWindowA("button", "Очистить поле", WS_VISIBLE | WS_CHILD | ES_CENTER, 25, 10, 115, 20, hwnd, (HMENU)OnClearedField, NULL, NULL);

@@ -43,15 +43,7 @@ struct PhoneBookEntry {
 
 static std::vector<PhoneBookEntry> records;
 
-extern "C" DLL_LIB_API bool LoadDatabase(const WCHAR* filename, std::vector<PhoneBookEntry>& entries);
+
 extern "C" DLL_LIB_API void UnloadDatabase();
 extern "C" DLL_LIB_API std::vector<PhoneBookEntry> SearchByPhone(const std::wstring& phone, const std::vector<PhoneBookEntry>& phonebookData);
 extern "C" DLL_LIB_API std::vector<PhoneBookEntry> GetPhoneList(const std::vector<PhoneBookEntry>& phonebookData);
-extern "C" DLL_LIB_API std::wstring SerializePhoneBookEntry(const PhoneBookEntry& entry);
-extern "C" DLL_LIB_API PhoneBookEntry DeserializePhoneBookEntry(const std::wstring& line);
-extern "C" DLL_LIB_API bool InitSharedMemory();
-extern "C" DLL_LIB_API void CleanupSharedMemory();
-//extern "C" DLL_LIB_API bool WriteToSharedMemory(const std::vector<PhoneBookEntry>& entries);
-//extern "C" DLL_LIB_API bool WriteToSharedMemory(const std::wstring& filePath, wchar_t* sharedMemory, size_t maxMemorySize);
-//extern "C" DLL_LIB_API  void WriteToSharedMemory(wchar_t* sharedMemory, const std::vector<PhoneBookEntry>& phonebookData);
-//extern "C" DLL_LIB_API std::vector<PhoneBookEntry> ReadFromSharedMemory();
