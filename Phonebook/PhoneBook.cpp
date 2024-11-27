@@ -83,7 +83,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
         WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, // стиль окна
         (GetSystemMetrics(SM_CXSCREEN) - 800) / 2, // Центрирование по горизонтали
         (GetSystemMetrics(SM_CYSCREEN) - 500) / 2, // Центрирование по вертикали
-        815,                       // ширина окна
+        865,                       // ширина окна
         500,                       // высота окна
         nullptr,                   // родительское окно
         nullptr,                   // меню
@@ -106,7 +106,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
         WS_BORDER | WS_CHILD | WS_VISIBLE | LVS_REPORT | WS_VSCROLL | WS_HSCROLL,
         0,
         60,
-        800,
+        850,
         381,
         hWnd,
         (HMENU)IDC_LISTVIEW,
@@ -624,6 +624,7 @@ void AddColumns(HWND hwndLV)
     };
 
     ColumnInfo columns[] = {
+        { 50, L"N п/п"},
         { 100, L"Телефон" },
         { 100, L"Фамилия" },
         { 100, L"Имя" },
@@ -650,22 +651,26 @@ void AddItem(HWND hwndLV, int index, const std::wstring& phone, const std::wstri
     const std::wstring& firstName, const std::wstring& patronymic, const std::wstring& street,
     const std::wstring& house, const std::wstring& building, const std::wstring& apartment)
 {
+    // Добавляем индекс в первую колонку
     LVITEM lvItem;
     lvItem.mask = LVIF_TEXT;
     lvItem.iItem = index;
-    lvItem.iSubItem = 0;
-    lvItem.pszText = const_cast<LPWSTR>(phone.c_str());  // Конвертируем std::wstring в LPWSTR
+    lvItem.iSubItem = 0; // Первая колонка — индекс
+    std::wstring indexText = std::to_wstring(index + 1); // Индекс строки
+    lvItem.pszText = const_cast<LPWSTR>(indexText.c_str());
     ListView_InsertItem(hwndLV, &lvItem);
 
-    // Добавление данных в другие колонки
-    ListView_SetItemText(hwndLV, index, 1, const_cast<LPWSTR>(lastName.c_str()));
-    ListView_SetItemText(hwndLV, index, 2, const_cast<LPWSTR>(firstName.c_str()));
-    ListView_SetItemText(hwndLV, index, 3, const_cast<LPWSTR>(patronymic.c_str()));
-    ListView_SetItemText(hwndLV, index, 4, const_cast<LPWSTR>(street.c_str()));
-    ListView_SetItemText(hwndLV, index, 5, const_cast<LPWSTR>(house.c_str()));
-    ListView_SetItemText(hwndLV, index, 6, const_cast<LPWSTR>(building.c_str()));
-    ListView_SetItemText(hwndLV, index, 7, const_cast<LPWSTR>(apartment.c_str()));
+    // Добавляем номер телефона во вторую колонку
+    ListView_SetItemText(hwndLV, index, 1, const_cast<LPWSTR>(phone.c_str()));
+    ListView_SetItemText(hwndLV, index, 2, const_cast<LPWSTR>(lastName.c_str()));
+    ListView_SetItemText(hwndLV, index, 3, const_cast<LPWSTR>(firstName.c_str()));
+    ListView_SetItemText(hwndLV, index, 4, const_cast<LPWSTR>(patronymic.c_str()));
+    ListView_SetItemText(hwndLV, index, 5, const_cast<LPWSTR>(street.c_str()));
+    ListView_SetItemText(hwndLV, index, 6, const_cast<LPWSTR>(house.c_str()));
+    ListView_SetItemText(hwndLV, index, 7, const_cast<LPWSTR>(building.c_str()));
+    ListView_SetItemText(hwndLV, index, 8, const_cast<LPWSTR>(apartment.c_str()));
 }
+
 
 void ShowMemoryContents(HWND hwnd) {
     const WCHAR* sharedMemoryName = L"PhoneBookSharedMemory";
