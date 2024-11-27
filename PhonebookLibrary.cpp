@@ -116,27 +116,23 @@ void ConvertToUnicode(const char* ansiStr, WCHAR* unicodeStr, size_t unicodeStrS
 }
 
 // Освобождение ресурсов
-void UnloadFromDatabase() {
-    if (fileData) UnmapViewOfFile(fileData);
-    if (hMapping) CloseHandle(hMapping);
-    if (hFile) CloseHandle(hFile);
-
-    hFile = NULL;
-    hMapping = NULL;
-    fileData = nullptr;
-    fileSize = 0;
-    records.clear();
-}
-
-// Освобождение ресурсов
-void CleanupSharedMemory() {
-    if (sharedMemory != NULL) {
-        UnmapViewOfFile(sharedMemory);
+void CleanupResources() {
+    if (fileData) {
+        UnmapViewOfFile(fileData);
+        fileData = nullptr;
     }
 
-    if (hMapping != NULL) {
+    if (hMapping) {
         CloseHandle(hMapping);
+        hMapping = NULL;
     }
+
+    if (hFile) {
+        CloseHandle(hFile);
+        hFile = NULL;
+    }
+
+    records.clear();
 }
 
 // Десериализация записей справочника в массив сущностей

@@ -160,8 +160,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         MainWndAddWidgets(hWnd);
         break;
     case WM_DESTROY:
-        CleanupSharedMemory();
-        UnloadFromDatabase();
+        CleanupResources();
         PostQuitMessage(0);
         break;
     default:

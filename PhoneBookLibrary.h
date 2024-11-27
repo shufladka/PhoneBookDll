@@ -44,8 +44,7 @@ static std::vector<PhoneBookEntry> records;
 
 extern "C" DLL_LIB_API void InitializeSharedMemory(HWND hWnd);
 extern "C" DLL_LIB_API BOOL UploadToDatabase(HWND hwndListView, const char* filename);
-extern "C" DLL_LIB_API void UnloadFromDatabase();
-extern "C" DLL_LIB_API void CleanupSharedMemory();
+extern "C" DLL_LIB_API void CleanupResources();
 
 extern "C" DLL_LIB_API std::vector<PhoneBookEntry> ParsePhoneBookData(const std::wstring& sharedMemoryContent);
 extern "C" DLL_LIB_API std::vector<PhoneBookEntry> LoadPhoneBookDataFromSharedMemory(HWND hwndListView);
