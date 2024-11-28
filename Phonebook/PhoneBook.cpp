@@ -10,13 +10,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
-    // Инициализация глобальных строк
-    LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_PHONEBOOK, szWindowClass, MAX_LOADSTRING);
+    // Устанавливаем имя для приложения
+    wcscpy_s(szTitle, L"Телефонный справочник Минска");
+    wcscpy_s(szWindowClass, L"Телефонный справочник Минска");
+
     MyRegisterClass(hInstance);
 
-    // Инициализация библиотеки Common Controls
-    InitCommonControls();  // Инициализируем общие элементы управления
+    // Инициализация общих элементов управления с помощью библиотеки Common Controls
+    InitCommonControls();
 
     // Выполнить инициализацию приложения:
     if (!InitInstance(hInstance, nCmdShow))
@@ -25,7 +26,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     }
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_PHONEBOOK));
-
     MSG msg;
 
     // Цикл основного сообщения:
@@ -51,12 +51,12 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.cbClsExtra = 0;
     wcex.cbWndExtra = 0;
     wcex.hInstance = hInstance;
-    wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_PHONEBOOK));
+    wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));
     wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_PHONEBOOK);
     wcex.lpszClassName = szWindowClass;
-    wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+    wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_ICON1));
 
     return RegisterClassExW(&wcex);
 }
@@ -65,17 +65,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
     hInst = hInstance; // Сохранить маркер экземпляра в глобальной переменной
-
-    /*
-    // Шаг 1: Создание меню
-    HMENU hMenu = CreateMenu();
-    HMENU hSubMenu = CreatePopupMenu();
-
-    // Добавляем пункты меню
-    AppendMenuW(hSubMenu, MF_STRING, OnClearedField, L"&Очистить");
-    //AppendMenuW(hSubMenu, MF_STRING, ID_FILE_EXIT, L"E&xit");
-    AppendMenuW(hMenu, MF_POPUP, (UINT_PTR)hSubMenu, L"&File");
-    */
 
     HWND hWnd = CreateWindowW(
         szWindowClass,               // имя класса
@@ -99,7 +88,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
 
-    // Создание ListView
+    // Создание списка ListView
     hwndListView = CreateWindowW(
         WC_LISTVIEW,
         L"",
@@ -114,7 +103,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
         nullptr
     );
 
-    // Добавление колонок в ListView
+    // Добавление колонок в список ListView
     DefineColumns(hwndListView);
     
     return TRUE;
@@ -139,12 +128,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             PickTheFile(hwndListView, hWnd);
             break;
         case OnLoadDatabase:
-            //ShowMemoryContents(hwndListView);
             LoadDataToTable(hwndListView);
             break;
         case OnClearedList:
-            ClearSharedMemory();
-            ListView_DeleteAllItems(hwndListView);
+            SetWindowTextA(hEditControl, "");
             break;
         case OnSearch:
             OnSearchByField(hEditControl, hComboBox, hwndListView);
@@ -238,35 +225,6 @@ void LoadDataToTable(HWND hwndListView) {
     if (!phonebookData.empty()) {
         PhoneBookFilling(hwndListView, phonebookData);
     }
-}
-
-// Отображение записей справочника из общей памяти на экран в виде сообщения
-void ShowMemoryContents(HWND hwnd) {
-
-    // Подключаемся к существующему объекту общей памяти
-    HANDLE hMapping = OpenFileMappingW(FILE_MAP_READ, FALSE, sharedMemoryName);
-    if (hMapping == NULL) {
-        MessageBoxW(hwnd, L"Не удалось подключиться к общей памяти!", L"Ошибка", MB_OK | MB_ICONERROR);
-        return;
-    }
-
-    // Мапим память в адресное пространство процесса
-    wchar_t* sharedMemory = (wchar_t*)MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0);
-    if (sharedMemory == NULL) {
-        MessageBoxW(hwnd, L"Не удалось отобразить память в адресное пространство!", L"Ошибка", MB_OK | MB_ICONERROR);
-        CloseHandle(hMapping);
-        return;
-    }
-
-    // Создаем строку с содержимым общей памяти
-    wstring memoryContents(sharedMemory);
-
-    // Отображаем содержимое в MessageBox
-    MessageBoxW(hwnd, memoryContents.c_str(), L"Содержимое общей памяти", MB_OK);
-
-    // Закрываем отображение памяти
-    UnmapViewOfFile(sharedMemory);
-    CloseHandle(hMapping);
 }
 
 // Добавление пунктов меню

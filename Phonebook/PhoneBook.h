@@ -18,7 +18,7 @@
 #define TextBufferSize	1000
 
 HWND hEditControl;								// Поле ввода
-HWND hComboBox;								// Выпадающее меню
+HWND hComboBox;									// Выпадающее меню
 char filename[MAX_PATH];						// Для хранения пути к выбранному файлу
 OPENFILENAMEA ofn;								// Структура для диалога открытия файла
 HINSTANCE hInst;                                // Текущий экземпляр
@@ -41,6 +41,4 @@ void				PhoneBookFilling(HWND hwndListView, const vector<PhoneBookEntry>& phoneb
 
 void                PickTheFile(HWND hwndListView, HWND hwndOwner);
 void				LoadDataToTable(HWND hwndListView);
-
-void                ShowMemoryContents(HWND hwnd);
 void                OnSearchByField(HWND hEditControl, HWND hComboBox, HWND hListView);
