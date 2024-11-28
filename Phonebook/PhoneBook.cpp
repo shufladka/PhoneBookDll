@@ -143,8 +143,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             LoadDataToTable(hwndListView);
             break;
         case OnClearedList:
-            //phonebookData.clear();
-            //ListView_DeleteAllItems(hwndListView);
             ClearSharedMemory();
             ListView_DeleteAllItems(hwndListView);
             break;
@@ -207,7 +205,7 @@ void DefineColumns(HWND hwndLV)
 }
 
 // Заполнение таблицы списком записей
-void PhoneBookFilling(HWND hwndListView, const std::vector<PhoneBookEntry>& phonebookData) {
+void PhoneBookFilling(HWND hwndListView, const vector<PhoneBookEntry>& phonebookData) {
 
     // Удаляем все элементы перед добавлением новых
     ListView_DeleteAllItems(hwndListView);
@@ -219,7 +217,7 @@ void PhoneBookFilling(HWND hwndListView, const std::vector<PhoneBookEntry>& phon
         lvItem.iItem = static_cast<int>(i);
         lvItem.iSubItem = 0;
 
-        std::wstring indexText = std::to_wstring(i + 1);
+        wstring indexText = to_wstring(i + 1);
         lvItem.pszText = const_cast<LPWSTR>(indexText.c_str());
         ListView_InsertItem(hwndListView, &lvItem);
 
@@ -262,7 +260,7 @@ void ShowMemoryContents(HWND hwnd) {
     }
 
     // Создаем строку с содержимым общей памяти
-    std::wstring memoryContents(sharedMemory);
+    wstring memoryContents(sharedMemory);
 
     // Отображаем содержимое в MessageBox
     MessageBoxW(hwnd, memoryContents.c_str(), L"Содержимое общей памяти", MB_OK);
@@ -271,34 +269,6 @@ void ShowMemoryContents(HWND hwnd) {
     UnmapViewOfFile(sharedMemory);
     CloseHandle(hMapping);
 }
-
-bool IsSharedMemoryEmpty(HWND hwnd) {
-
-    // Подключаемся к существующему объекту общей памяти
-    HANDLE hMapping = OpenFileMappingW(FILE_MAP_READ, FALSE, sharedMemoryName);
-    if (hMapping == NULL) {
-        MessageBoxW(hwnd, L"Не удалось подключиться к общей памяти!", L"Ошибка", MB_OK | MB_ICONERROR);
-        return true; // Если памяти нет, считаем её "пустой"
-    }
-
-    // Мапим память в адресное пространство процесса
-    wchar_t* sharedMemory = (wchar_t*)MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0);
-    if (sharedMemory == NULL) {
-        MessageBoxW(hwnd, L"Не удалось отобразить память в адресное пространство!", L"Ошибка", MB_OK | MB_ICONERROR);
-        CloseHandle(hMapping);
-        return true; // Если не удалось отобразить, считаем её пустой
-    }
-
-    // Проверяем, есть ли данные (проверка на пустую строку)
-    bool isEmpty = (sharedMemory[0] == L'\0');
-
-    // Закрываем ресурсы
-    UnmapViewOfFile(sharedMemory);
-    CloseHandle(hMapping);
-
-    return isEmpty;
-}
-
 
 // Добавление пунктов меню
 void MainWndAddMenues(HWND hwnd) {
@@ -345,10 +315,6 @@ void PickTheFile(HWND hwndListView, HWND hwndOwner) {
 
     SetOpenFileParams(hwndOwner);
     if (GetOpenFileNameA(&ofn)) {
-        if (fileLoaded) {
-            CleanupResources(); // Очистить старые данные
-        }
-
         if (!UploadToDatabase(hwndListView, filename)) {
             MessageBox(hwndOwner, L"Ошибка загрузки данных из файла.", L"Ошибка", MB_OK | MB_ICONERROR);
         }

@@ -15,15 +15,12 @@
 #define OnReadFile		4
 #define OnLoadDatabase  5
 
-HWND hEditControl;
-//std::vector<PhoneBookEntry> phonebookData;
-
 #define TextBufferSize	1000
 
-char filename[MAX_PATH];        // Для хранения пути к выбранному файлу
-OPENFILENAMEA ofn;              // Структура для диалога открытия файла
+HWND hEditControl;
 
-// Глобальные переменные:
+char filename[MAX_PATH];						// Для хранения пути к выбранному файлу
+OPENFILENAMEA ofn;								// Структура для диалога открытия файла
 HINSTANCE hInst;                                // Текущий экземпляр
 WCHAR szTitle[MAX_LOADSTRING];                  // Текст строки заголовка
 WCHAR szWindowClass[MAX_LOADSTRING];            // Имя класса главного окна
@@ -40,11 +37,10 @@ void                MainWndAddWidgets(HWND hwnd);
 void                SetOpenFileParams(HWND hwnd);
 
 void                DefineColumns(HWND hwndLV);
-void				PhoneBookFilling(HWND hwndListView, const std::vector<PhoneBookEntry>& phonebookData);
+void				PhoneBookFilling(HWND hwndListView, const vector<PhoneBookEntry>& phonebookData);
 
 void                PickTheFile(HWND hwndListView, HWND hwndOwner);
 void				LoadDataToTable(HWND hwndListView);
 
-bool				IsSharedMemoryEmpty(HWND hwnd);
 void                ShowMemoryContents(HWND hwnd);
 void                OnSearchByPhone(HWND hEditControl, HWND hListView);
