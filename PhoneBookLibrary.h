@@ -19,8 +19,9 @@ static HANDLE hMapping = NULL;
 static wchar_t* fileData = nullptr;
 static size_t fileSize = 0;
 
-const WCHAR* sharedMemoryName = L"PhoneBookSharedMemory";
-wchar_t* sharedMemory = NULL;
+const wchar_t delimeter = L';';                             // Разделитель полей в строке справочника
+const WCHAR* sharedMemoryName = L"PhoneBookSharedMemory";   // Имя файла общей памяти
+wchar_t* sharedMemory = NULL;                               // Инициализация переменной для хранения данных из общей памяти
 constexpr size_t MAX_MEMORY_SIZE = 65536;                   // Максимальный размер памяти (в байтах)
 #define MAX_ENTRY_SIZE 512                                  // Максимальный размер одной записи
 #define MAX_RECORDS 100                                     // Максимальное количество записей

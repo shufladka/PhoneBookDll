@@ -207,15 +207,15 @@ vector<PhoneBookEntry> ParsePhoneBookData(const wstring& sharedMemoryContent) {
         wstringstream ss(line);
         wstring phone, lastName, firstName, patronymic, street, house, building, apartment;
 
-        // Разделяем строку по символу ';'
-        getline(ss, phone, L';');
-        getline(ss, lastName, L';');
-        getline(ss, firstName, L';');
-        getline(ss, patronymic, L';');
-        getline(ss, street, L';');
-        getline(ss, house, L';');
-        getline(ss, building, L';');
-        getline(ss, apartment, L';');
+        // Разделяем строку по символу 'delimeter'
+        getline(ss, phone, delimeter);
+        getline(ss, lastName, delimeter);
+        getline(ss, firstName, delimeter);
+        getline(ss, patronymic, delimeter);
+        getline(ss, street, delimeter);
+        getline(ss, house, delimeter);
+        getline(ss, building, delimeter);
+        getline(ss, apartment, delimeter);
 
         // Создаём объект PhoneBookEntry
         PhoneBookEntry entry = {
