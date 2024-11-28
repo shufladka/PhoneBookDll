@@ -252,17 +252,57 @@ vector<PhoneBookEntry> LoadDatabaseFromMemory(HWND hwndListView) {
     return ParsePhoneBookData(sharedMemoryContent);
 }
 
-// Функция поиска записей по номеру телефона
-vector<PhoneBookEntry> SearchByPhone(const wstring& phone, const vector<PhoneBookEntry>& phonebookData) {
+// Функция поиска записей по указанному полю
+vector<PhoneBookEntry> SearchByField(const wstring& value, const vector<PhoneBookEntry>& phonebookData, int fieldIndex) {
     vector<PhoneBookEntry> results;
 
-    // Проходим по всем записям и ищем совпадения по номеру (подстрока)
     for (const auto& record : phonebookData) {
-        if (record.phone.find(phone) != wstring::npos) { // Проверяем, содержится ли phone в record.phone
-            results.push_back(record); // Добавляем в результаты, если найдено совпадение
+
+        // Проверяем поле на основе индекса
+        bool match = false;
+
+        switch (fieldIndex) {
+        case 0: // Поиск по всем полям
+            match = record.phone.find(value) != wstring::npos ||
+                record.lastName.find(value) != wstring::npos ||
+                record.firstName.find(value) != wstring::npos ||
+                record.patronymic.find(value) != wstring::npos ||
+                record.street.find(value) != wstring::npos ||
+                record.house.find(value) != wstring::npos ||
+                record.building.find(value) != wstring::npos ||
+                record.apartment.find(value) != wstring::npos;
+            break;
+        case 1: // Телефон
+            match = record.phone.find(value) != wstring::npos;
+            break;
+        case 2: // Фамилия
+            match = record.lastName.find(value) != wstring::npos;
+            break;
+        case 3: // Имя
+            match = record.firstName.find(value) != wstring::npos;
+            break;
+        case 4: // Отчество
+            match = record.patronymic.find(value) != wstring::npos;
+            break;
+        case 5: // Улица
+            match = record.street.find(value) != wstring::npos;
+            break;
+        case 6: // Дом
+            match = record.house.find(value) != wstring::npos;
+            break;
+        case 7: // Корпус
+            match = record.building.find(value) != wstring::npos;
+            break;
+        case 8: // Квартира
+            match = record.apartment.find(value) != wstring::npos;
+            break;
+        }
+
+        // Если найдено совпадение, добавляем запись в результаты
+        if (match) {
+            results.push_back(record);
         }
     }
 
-    // Возвращаем найденные записи (массив может быть пустым, если ничего не найдено)
-    return results;
+    return results; // Возвращаем найденные записи
 }

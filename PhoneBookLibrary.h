@@ -49,6 +49,6 @@ extern "C" DLL_LIB_API  void    ClearSharedMemory();
 
 extern "C" DLL_LIB_API  vector<PhoneBookEntry>  ParsePhoneBookData(const wstring& sharedMemoryContent);
 extern "C" DLL_LIB_API  vector<PhoneBookEntry>  LoadDatabaseFromMemory(HWND hwndListView);
-extern "C" DLL_LIB_API  vector<PhoneBookEntry>  SearchByPhone(const wstring& phone, const vector<PhoneBookEntry>& phonebookData);
+extern "C" DLL_LIB_API  vector<PhoneBookEntry>  SearchByField(const wstring& value, const vector<PhoneBookEntry>& phonebookData, int fieldIndex);
 
 void ConvertToUnicode(const char* ansiStr, WCHAR* unicodeStr, size_t unicodeStrSize);

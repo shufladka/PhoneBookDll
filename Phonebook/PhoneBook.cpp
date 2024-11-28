@@ -147,7 +147,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             ListView_DeleteAllItems(hwndListView);
             break;
         case OnSearch:
-            OnSearchByPhone(hEditControl, hwndListView);
+            OnSearchByField(hEditControl, hComboBox, hwndListView);
             break;
         default:
             return DefWindowProc(hWnd, message, wParam, lParam);
@@ -281,9 +281,32 @@ void MainWndAddMenues(HWND hwnd) {
 
 // Добавление виджетов в рабочую область приложения
 void MainWndAddWidgets(HWND hwnd) {
-    CreateWindowA("button", "Очистить поле", WS_VISIBLE | WS_CHILD | ES_CENTER, 25, 10, 115, 20, hwnd, (HMENU)OnClearedField, NULL, NULL);
-    hEditControl = CreateWindowA("edit", "", WS_BORDER | WS_VISIBLE | WS_CHILD, 155, 10, 430, 20, hwnd, NULL, NULL, NULL);
-    CreateWindowA("button", "Поиск", WS_VISIBLE | WS_CHILD | ES_CENTER, 600, 10, 150, 20, hwnd, (HMENU)OnSearch, NULL, NULL);
+
+    // Кнопка "Очистить строку"
+    CreateWindowA("button", "Очистить строку", WS_VISIBLE | WS_CHILD | ES_CENTER, 25, 20, 125, 20, hwnd, (HMENU)OnClearedField, NULL, NULL);
+
+    // Поле ввода
+    hEditControl = CreateWindowA("edit", "", WS_BORDER | WS_VISIBLE | WS_CHILD, 165, 20, 350, 20, hwnd, NULL, NULL, NULL);
+
+    // Выпадающее меню 
+    hComboBox = CreateWindowA("combobox", NULL, WS_VISIBLE | WS_CHILD | CBS_DROPDOWNLIST | CBS_HASSTRINGS, 530, 20, 130, 200, hwnd, (HMENU)101, NULL, NULL);
+
+    // Добавление элементов в выпадающее меню
+    SendMessageA(hComboBox, CB_ADDSTRING, 0, (LPARAM)"Все поля");
+    SendMessageA(hComboBox, CB_ADDSTRING, 0, (LPARAM)"Телефон");
+    SendMessageA(hComboBox, CB_ADDSTRING, 0, (LPARAM)"Фамилия");
+    SendMessageA(hComboBox, CB_ADDSTRING, 0, (LPARAM)"Имя");
+    SendMessageA(hComboBox, CB_ADDSTRING, 0, (LPARAM)"Отчество");
+    SendMessageA(hComboBox, CB_ADDSTRING, 0, (LPARAM)"Улица");
+    SendMessageA(hComboBox, CB_ADDSTRING, 0, (LPARAM)"Дом");
+    SendMessageA(hComboBox, CB_ADDSTRING, 0, (LPARAM)"Корпус");
+    SendMessageA(hComboBox, CB_ADDSTRING, 0, (LPARAM)"Квартира");
+
+    // Устанавливаем первый элемент как выбранный по умолчанию
+    SendMessageA(hComboBox, CB_SETCURSEL, 0, 0);
+
+    // Кнопка "Поиск"
+    CreateWindowA("button", "Поиск", WS_VISIBLE | WS_CHILD | ES_CENTER, 670, 20, 150, 20, hwnd, (HMENU)OnSearch, NULL, NULL);
 }
 
 // Инициализация структуры OPENFILENAME
@@ -323,29 +346,38 @@ void PickTheFile(HWND hwndListView, HWND hwndOwner) {
     }
 }
 
-// Функция для извлечения текста из текстового поля и поиска записи
-void OnSearchByPhone(HWND hEditControl, HWND hListView) {
-    wchar_t phone[100]; // Буфер для номера телефона
-    GetWindowText(hEditControl, phone, 100); // Извлечение текста из текстового поля
+// Функция для извлечения текста из текстового поля и поиска записи по выбранному полю
+void OnSearchByField(HWND hEditControl, HWND hComboBox, HWND hListView) {
+    wchar_t value[100]; // Буфер для значения
+    GetWindowTextW(hEditControl, value, 100); // Извлечение текста из текстового поля
 
-    // Выполняем поиск записей по номеру телефона
-    auto searchResults = SearchByPhone(phone, phonebookData);
+    int selectedField = SendMessageA(hComboBox, CB_GETCURSEL, 0, 0); // Индекс выбранного элемента
+
+    if (selectedField == CB_ERR) {
+        MessageBoxW(hListView, L"Не удалось определить выбранное поле.", L"Ошибка", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    // Выполняем поиск записей по выбранному полю
+    auto searchResults = SearchByField(value, phonebookData, selectedField);
 
     // Очищаем ListView перед отображением новых данных
     ListView_DeleteAllItems(hListView);
 
     if (!searchResults.empty()) {
+
         // Если найдены записи, отображаем только их
         PhoneBookFilling(hListView, searchResults);
     }
     else {
-        if (wcslen(phone) == 0) {
+        if (wcslen(value) == 0) {
             // Если строка поиска пуста, показываем все записи
             PhoneBookFilling(hListView, phonebookData);
         }
         else {
             // Если ничего не найдено и строка поиска не пуста
-            MessageBoxW(hListView, L"Записи с указанным номером телефона не найдены.", L"Поиск", MB_OK | MB_ICONINFORMATION);
+            MessageBoxW(hListView, L"Записи с указанным значением не найдены.", L"Поиск", MB_OK | MB_ICONINFORMATION);
         }
     }
 }
+
