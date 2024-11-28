@@ -56,7 +56,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_PHONEBOOK);
     wcex.lpszClassName = szWindowClass;
-    wcex.hIconSm = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_ICON1));
+    wcex.hIconSm = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));
 
     return RegisterClassExW(&wcex);
 }
@@ -131,7 +131,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             LoadDataToTable(hwndListView);
             break;
         case OnClearedList:
-            SetWindowTextA(hEditControl, "");
+            CleanupResources();
+            ListView_DeleteAllItems(hwndListView);
             break;
         case OnSearch:
             OnSearchByField(hEditControl, hComboBox, hwndListView);
@@ -286,15 +287,15 @@ void SetOpenFileParams(HWND hwnd) {
 
 // Функция для обработки загрузки файла
 void PickTheFile(HWND hwndListView, HWND hwndOwner) {
-
-    // Проверяем, пуста ли память перед загрузкой нового файла
-    if (!IsSharedMemoryEmpty(hwndOwner)) {
-        MessageBoxW(hwndOwner, L"Общая память не пуста. Закройте другие экземпляры программы и повторите попытку.", L"Ошибка", MB_OK | MB_ICONERROR);
-        return;
-    }
-
     SetOpenFileParams(hwndOwner);
     if (GetOpenFileNameA(&ofn)) {
+
+        // Проверяем, пуста ли память перед загрузкой нового файла
+        if (!IsSharedMemoryEmpty(hwndOwner)) {
+            MessageBoxW(hwndOwner, L"Общая память не пуста. Закройте другие экземпляры программы и повторите попытку.", L"Ошибка", MB_OK | MB_ICONERROR);
+            return;
+        }
+
         if (!UploadToDatabase(hwndListView, filename)) {
             MessageBox(hwndOwner, L"Ошибка загрузки данных из файла.", L"Ошибка", MB_OK | MB_ICONERROR);
         }
