@@ -16,7 +16,7 @@
 #define OnLoadDatabase  5
 
 HWND hEditControl;
-std::vector<PhoneBookEntry> phonebookData;
+//std::vector<PhoneBookEntry> phonebookData;
 
 #define TextBufferSize	1000
 
@@ -42,8 +42,9 @@ void                SetOpenFileParams(HWND hwnd);
 void                DefineColumns(HWND hwndLV);
 void				PhoneBookFilling(HWND hwndListView, const std::vector<PhoneBookEntry>& phonebookData);
 
-void                LoadDataFromMenu(HWND hwndListView, HWND hwndOwner);
-void				LoadDataToListView(HWND hwndListView);
+void                PickTheFile(HWND hwndListView, HWND hwndOwner);
+void				LoadDataToTable(HWND hwndListView);
 
+bool				IsSharedMemoryEmpty(HWND hwnd);
 void                ShowMemoryContents(HWND hwnd);
 void                OnSearchByPhone(HWND hEditControl, HWND hListView);

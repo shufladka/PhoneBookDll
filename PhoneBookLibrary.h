@@ -18,6 +18,9 @@ static HANDLE hMapping = NULL;
 static wchar_t* fileData = nullptr;
 static size_t fileSize = 0;
 
+bool fileLoaded = false; // Глобальный флаг, который указывает, загружен ли файл
+
+
 const WCHAR* sharedMemoryName = L"PhoneBookSharedMemory";
 wchar_t* sharedMemory = NULL;
 constexpr size_t MAX_MEMORY_SIZE = 65536; // Максимальный размер памяти (в байтах)
@@ -40,14 +43,17 @@ struct PhoneBookEntry {
     std::wstring apartment;
 };
 
-static std::vector<PhoneBookEntry> records;
+//static std::vector<PhoneBookEntry> records;
+std::vector<PhoneBookEntry> phonebookData;
 
 extern "C" DLL_LIB_API void InitializeSharedMemory(HWND hWnd);
 extern "C" DLL_LIB_API BOOL UploadToDatabase(HWND hwndListView, const char* filename);
 extern "C" DLL_LIB_API void CleanupResources();
 
+extern "C" DLL_LIB_API void ClearSharedMemory();
+
 extern "C" DLL_LIB_API std::vector<PhoneBookEntry> ParsePhoneBookData(const std::wstring& sharedMemoryContent);
-extern "C" DLL_LIB_API std::vector<PhoneBookEntry> LoadPhoneBookDataFromSharedMemory(HWND hwndListView);
+extern "C" DLL_LIB_API std::vector<PhoneBookEntry> LoadDatabaseFromMemory(HWND hwndListView);
 extern "C" DLL_LIB_API std::vector<PhoneBookEntry> SearchByPhone(const std::wstring& phone, const std::vector<PhoneBookEntry>& phonebookData);
 extern "C" DLL_LIB_API std::vector<PhoneBookEntry> GetPhoneList(const std::vector<PhoneBookEntry>& phonebookData);
 
