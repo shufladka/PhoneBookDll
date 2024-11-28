@@ -266,16 +266,3 @@ vector<PhoneBookEntry> SearchByPhone(const wstring& phone, const vector<PhoneBoo
     // Возвращаем найденные записи (массив может быть пустым, если ничего не найдено)
     return results;
 }
-
-// Функция для получения списка всех номеров
-vector<PhoneBookEntry> GetPhoneList(const vector<PhoneBookEntry>& phonebookData) {
-    vector<PhoneBookEntry> results;
-
-    // Проходим по всем записям
-    for (const auto& record : phonebookData) {
-        results.push_back(record); // Добавляем в результаты
-    }
-
-    // Возвращаем найденные записи (массив может быть пустым, если ничего не найдено)
-    return results;
-}

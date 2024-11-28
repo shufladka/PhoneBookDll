@@ -237,7 +237,6 @@ void LoadDataToTable(HWND hwndListView) {
     phonebookData = LoadDatabaseFromMemory(hwndListView);
     if (!phonebookData.empty()) {
         PhoneBookFilling(hwndListView, phonebookData);
-        //MessageBoxW(hwndListView, L"Данные успешно загружены!", L"Информация", MB_OK);
     }
 }
 
@@ -323,7 +322,6 @@ void PickTheFile(HWND hwndListView, HWND hwndOwner) {
         }
     }
 }
-
 
 // Функция для извлечения текста из текстового поля и поиска записи
 void OnSearchByPhone(HWND hEditControl, HWND hListView) {
