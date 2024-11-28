@@ -6,52 +6,50 @@
 #include <windows.h>
 #include <fstream>
 
+using namespace std;
+
 #ifdef DLL_LIB_EXPORTS
 #define DLL_LIB_API __declspec(dllexport)
 #else
 #define DLL_LIB_API __declspec(dllimport)
 #endif
 
-// √лобальные переменные дл€ работы с проецированием файла
 static HANDLE hFile = NULL;
 static HANDLE hMapping = NULL;
 static wchar_t* fileData = nullptr;
 static size_t fileSize = 0;
 
-wchar_t* sharedMemory = NULL;
-constexpr size_t MAX_MEMORY_SIZE = 65536; // ћаксимальный размер пам€ти (в байтах)
-
-#define MAX_ENTRY_SIZE 512  // ћаксимальный размер одной записи
-#define MAX_RECORDS 100     // ћаксимальное количество записей
-
-// ќбщий размер дл€ одной записи:
-#define MAX_RECORD_SIZE (MAX_ENTRY_SIZE * NUM_FIELDS)
-
-//static std::vector<Record> records;
+const wchar_t delimeter = L';';                             // –азделитель полей в строке справочника
+const WCHAR* sharedMemoryName = L"PhoneBookSharedMemory";   // »м€ файла общей пам€ти
+wchar_t* sharedMemory = NULL;                               // »нициализаци€ переменной дл€ хранени€ данных из общей пам€ти
+constexpr size_t MAX_MEMORY_SIZE = 65536;                   // ћаксимальный размер пам€ти (в байтах)
+#define MAX_ENTRY_SIZE 512                                  // ћаксимальный размер одной записи
+#define MAX_RECORDS 100                                     // ћаксимальное количество записей
+#define MAX_RECORD_SIZE (MAX_ENTRY_SIZE * NUM_FIELDS)       // ќбщий размер дл€ одной записи
 
 // —труктура дл€ хранени€ данных из справочника
 struct PhoneBookEntry {
-    std::wstring phone;
-    std::wstring lastName;
-    std::wstring firstName;
-    std::wstring patronymic;
-    std::wstring street;
-    std::wstring house;
-    std::wstring building;
-    std::wstring apartment;
+    wstring phone;
+    wstring lastName;
+    wstring firstName;
+    wstring patronymic;
+    wstring street;
+    wstring house;
+    wstring building;
+    wstring apartment;
 };
 
-static std::vector<PhoneBookEntry> records;
+vector<PhoneBookEntry> phonebookData;      // √лобальна€ переменна€ дл€ хранени€ десериализованного массива данных из справочника
 
-extern "C" DLL_LIB_API bool LoadDatabase(const WCHAR* filename, std::vector<PhoneBookEntry>& entries);
-extern "C" DLL_LIB_API void UnloadDatabase();
-extern "C" DLL_LIB_API std::vector<PhoneBookEntry> SearchByPhone(const std::wstring& phone, const std::vector<PhoneBookEntry>& phonebookData);
-extern "C" DLL_LIB_API std::vector<PhoneBookEntry> GetPhoneList(const std::vector<PhoneBookEntry>& phonebookData);
-extern "C" DLL_LIB_API std::wstring SerializePhoneBookEntry(const PhoneBookEntry& entry);
-extern "C" DLL_LIB_API PhoneBookEntry DeserializePhoneBookEntry(const std::wstring& line);
-extern "C" DLL_LIB_API bool InitSharedMemory();
-extern "C" DLL_LIB_API void CleanupSharedMemory();
-//extern "C" DLL_LIB_API bool WriteToSharedMemory(const std::vector<PhoneBookEntry>& entries);
-//extern "C" DLL_LIB_API bool WriteToSharedMemory(const std::wstring& filePath, wchar_t* sharedMemory, size_t maxMemorySize);
-//extern "C" DLL_LIB_API  void WriteToSharedMemory(wchar_t* sharedMemory, const std::vector<PhoneBookEntry>& phonebookData);
-//extern "C" DLL_LIB_API std::vector<PhoneBookEntry> ReadFromSharedMemory();
+extern "C" DLL_LIB_API  void    InitializeSharedMemory(HWND hWnd);
+extern "C" DLL_LIB_API  BOOL    UploadToDatabase(HWND hwndListView, const char* filename);
+extern "C" DLL_LIB_API  void    CleanupResources();
+
+extern "C" DLL_LIB_API  bool    IsSharedMemoryEmpty(HWND hwnd);
+extern "C" DLL_LIB_API  void    ClearSharedMemory();
+
+extern "C" DLL_LIB_API  vector<PhoneBookEntry>  ParsePhoneBookData(const wstring& sharedMemoryContent);
+extern "C" DLL_LIB_API  vector<PhoneBookEntry>  LoadDatabaseFromMemory(HWND hwndListView);
+extern "C" DLL_LIB_API  vector<PhoneBookEntry>  SearchByField(const wstring& value, const vector<PhoneBookEntry>& phonebookData, int fieldIndex);
+
+void ConvertToUnicode(const char* ansiStr, WCHAR* unicodeStr, size_t unicodeStrSize);

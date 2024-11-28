@@ -1,315 +1,308 @@
 #include "pch.h"
 #include "PhonebookLibrary.h"
 
-// Функция для чтения данных из файла
-//bool LoadDatabase(const WCHAR* filename, std::vector<PhoneBookEntry>& entries) {
-//
-//    // Открываем файл для чтения
-//    hFile = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-//    if (hFile == INVALID_HANDLE_VALUE) {
-//        return false;
-//    }
-//
-//    // Получаем размер файла
-//    fileSize = GetFileSize(hFile, NULL);
-//    if (fileSize == INVALID_FILE_SIZE) {
-//        CloseHandle(hFile);
-//        return false;
-//    }
-//
-//    // Создаём отображение файла
-//    hMapping = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
-//    if (!hMapping) {
-//        CloseHandle(hFile);
-//        return false;
-//    }
-//
-//    // Мапим файл в память
-//    fileData = (wchar_t*)MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0);
-//    if (!fileData) {
-//        CloseHandle(hMapping);
-//        CloseHandle(hFile);
-//        return false;
-//    }
-//
-//    std::wifstream file(filename);  // Открываем файл для чтения
-//    if (!file.is_open()) {
-//        return false;  // Если не удалось открыть файл
-//    }
-//
-//    std::wstring line;
-//    while (std::getline(file, line)) {
-//        std::wstringstream ss(line);  // Создаём строковый поток для разбора строки
-//        std::wstring phone, lastName, firstName, patronymic, street, house, building, apartment;
-//
-//        // Разделяем строку по символу ';'
-//        std::getline(ss, phone, L';');
-//        std::getline(ss, lastName, L';');
-//        std::getline(ss, firstName, L';');
-//        std::getline(ss, patronymic, L';');
-//        std::getline(ss, street, L';');
-//        std::getline(ss, house, L';');
-//        std::getline(ss, building, L';');
-//        std::getline(ss, apartment, L';');
-//
-//        // Добавляем данные в список
-//        PhoneBookEntry entry = { phone, lastName, firstName, patronymic, street, house, building, apartment };
-//        entries.push_back(entry);
-//    }
-//
-//    return true;
-//}
-bool LoadDatabase(const WCHAR* filePath, std::vector<PhoneBookEntry>& entries) {
-    std::wifstream file(filePath);
-    if (!file.is_open()) {
-        MessageBoxW(NULL, L"Не удалось открыть файл для чтения", L"Ошибка", MB_ICONERROR);
-        return false;
-    }
-
-    std::wstring line;
-    while (std::getline(file, line)) {
-        entries.push_back(DeserializePhoneBookEntry(line));
-    }
-
-    return true;
-}
-
-// Освобождение ресурсов
-void UnloadDatabase() {
-    if (fileData) UnmapViewOfFile(fileData);
-    if (hMapping) CloseHandle(hMapping);
-    if (hFile) CloseHandle(hFile);
-
-    hFile = NULL;
-    hMapping = NULL;
-    fileData = nullptr;
-    fileSize = 0;
-    records.clear();
-}
-
-// Функция поиска записей по номеру телефона
-std::vector<PhoneBookEntry> SearchByPhone(const std::wstring& phone, const std::vector<PhoneBookEntry>& phonebookData) {
-    std::vector<PhoneBookEntry> results;
-
-    // Проходим по всем записям и ищем совпадения по номеру (подстрока)
-    for (const auto& record : phonebookData) {
-        if (record.phone.find(phone) != std::wstring::npos) { // Проверяем, содержится ли phone в record.phone
-            results.push_back(record); // Добавляем в результаты, если найдено совпадение
-        }
-    }
-
-    // Возвращаем найденные записи (массив может быть пустым, если ничего не найдено)
-    return results;
-}
-
-// Функция для получения списка всех номеров
-std::vector<PhoneBookEntry> GetPhoneList(const std::vector<PhoneBookEntry>& phonebookData) {
-    std::vector<PhoneBookEntry> results;
-
-    // Проходим по всем записям
-    for (const auto& record : phonebookData) {
-        results.push_back(record); // Добавляем в результаты
-    }
-
-    // Возвращаем найденные записи (массив может быть пустым, если ничего не найдено)
-    return results;
-}
-
-// Сериализация записи в строку
-std::wstring SerializePhoneBookEntry(const PhoneBookEntry& entry) {
-    std::wstringstream ss;
-    ss << entry.phone << L";" << entry.lastName << L";" << entry.firstName << L";"
-        << entry.patronymic << L";" << entry.street << L";" << entry.house << L";"
-        << entry.building << L";" << entry.apartment;
-    return ss.str();
-}
-
-// Десериализация строки в запись
-PhoneBookEntry DeserializePhoneBookEntry(const std::wstring& line) {
-    std::wstringstream ss(line);
-    PhoneBookEntry entry;
-    std::getline(ss, entry.phone, L';');
-    std::getline(ss, entry.lastName, L';');
-    std::getline(ss, entry.firstName, L';');
-    std::getline(ss, entry.patronymic, L';');
-    std::getline(ss, entry.street, L';');
-    std::getline(ss, entry.house, L';');
-    std::getline(ss, entry.building, L';');
-    std::getline(ss, entry.apartment, L';');
-    return entry;
-}
 
 // Инициализация общей памяти
-bool InitSharedMemory() {
-    hMapping = CreateFileMappingW(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, MAX_MEMORY_SIZE, L"PhoneBookSharedMemory");
-    if (!hMapping) {
-        MessageBoxW(NULL, L"Не удалось создать отображение памяти", L"Ошибка", MB_ICONERROR);
-        return false;
+void InitializeSharedMemory(HWND hWnd) {
+    bool isFirstInstance = false;
+
+    // Создаём или открываем объект отображения памяти
+    HANDLE hMapping = CreateFileMappingW(
+        INVALID_HANDLE_VALUE,               // Используем системную память
+        NULL,                               // Без защиты
+        PAGE_READWRITE,                     // Память доступна для чтения и записи
+        0,                                  // Высокие 32 бита размера (0, т.к. используем MAX_MEMORY_SIZE)
+        MAX_MEMORY_SIZE,                    // Низкие 32 бита размера
+        sharedMemoryName                    // Имя объекта
+    );
+
+    if (hMapping == NULL) {
+        MessageBoxW(hWnd, L"Не удалось создать общую память!", L"Ошибка", MB_OK | MB_ICONERROR);
+        return;
     }
 
-    sharedMemory = (wchar_t*)MapViewOfFile(hMapping, FILE_MAP_ALL_ACCESS, 0, 0, MAX_MEMORY_SIZE);
-    if (!sharedMemory) {
-        MessageBoxW(NULL, L"Не удалось отобразить память", L"Ошибка", MB_ICONERROR);
+    // Проверяем, является ли это первым экземпляром
+    if (GetLastError() == ERROR_ALREADY_EXISTS) {
+        isFirstInstance = false;  // Память уже создана
+    }
+    else {
+        isFirstInstance = true;  // Первый экземпляр создал память
+    }
+
+    // Мапим память в адресное пространство процесса
+    wchar_t* sharedMemory = (wchar_t*)MapViewOfFile(
+        hMapping,
+        FILE_MAP_ALL_ACCESS,  // Доступ на чтение и запись
+        0,
+        0,
+        0
+    );
+
+    if (sharedMemory == NULL) {
+        MessageBoxW(hWnd, L"Не удалось отобразить память в адресное пространство!", L"Ошибка", MB_OK | MB_ICONERROR);
         CloseHandle(hMapping);
-        return false;
+        return;
+    }
+}
+
+// Выгрузка данных из текстового файла в общую память
+BOOL UploadToDatabase(HWND hwndListView, const char* filename) {
+
+    HANDLE hFile = INVALID_HANDLE_VALUE;
+    HANDLE hMapping = NULL;
+    wchar_t* sharedMemory = NULL;
+
+    // Преобразуем строку пути к файлу
+    WCHAR unicodeFilename[MAX_PATH] = { 0 };
+    ConvertToUnicode(filename, unicodeFilename, sizeof(unicodeFilename) / sizeof(WCHAR));
+
+    // Открываем файл
+    hFile = CreateFileW(unicodeFilename, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) {
+        MessageBoxW(hwndListView, L"Не удалось открыть файл!", L"Ошибка", MB_OK | MB_ICONERROR);
+        return FALSE;
     }
 
-    return true;
+    // Проверяем размер файла
+    DWORD fileSize = GetFileSize(hFile, NULL);
+    if (fileSize == 0 || fileSize == INVALID_FILE_SIZE) {
+        MessageBoxW(hwndListView, L"Размер файла некорректен или равен нулю!", L"Ошибка", MB_OK | MB_ICONERROR);
+        CloseHandle(hFile);
+        return FALSE;
+    }
+
+    // Создаем объект проецирования файла
+    hMapping = CreateFileMappingW(hFile, NULL, PAGE_READWRITE, 0, 0, sharedMemoryName);
+    if (hMapping == NULL) {
+        DWORD error = GetLastError();
+        wstringstream ss;
+        ss << L"Ошибка создания объекта проецирования файла. Код: " << error;
+        MessageBoxW(hwndListView, ss.str().c_str(), L"Ошибка", MB_OK | MB_ICONERROR);
+        CloseHandle(hFile);
+        return FALSE;
+    }
+
+    // Отображаем файл в адресное пространство
+    sharedMemory = (wchar_t*)MapViewOfFile(hMapping, FILE_MAP_WRITE, 0, 0, 0);
+    if (sharedMemory == NULL) {
+        MessageBoxW(hwndListView, L"Не удалось отобразить файл в адресное пространство!", L"Ошибка", MB_OK | MB_ICONERROR);
+        CloseHandle(hMapping);
+        CloseHandle(hFile);
+        return FALSE;
+    }
+
+    // Очистить общую память перед записью новых данных
+    memset(sharedMemory, 0, fileSize);  // Очистка памяти перед записью новых данных
+
+    // Записываем данные в общую память
+    wifstream file(unicodeFilename);
+    file.imbue(locale(".1251")); // Для ANSI (Windows-1251)
+    wstring fileContent;
+    wstring line;
+    while (getline(file, line)) {
+        fileContent += line + L"\n";
+    }
+    memcpy(sharedMemory, fileContent.c_str(), fileContent.size() * sizeof(wchar_t));
+
+    // Закрываем ресурсы
+    UnmapViewOfFile(sharedMemory);
+    CloseHandle(hMapping);
+    CloseHandle(hFile);
+
+    MessageBoxW(hwndListView, L"Данные успешно загружены в общую память!", L"Информация", MB_OK);
+    return TRUE;
+}
+
+// Преобразование строки из ANSI в Unicode
+void ConvertToUnicode(const char* ansiStr, WCHAR* unicodeStr, size_t unicodeStrSize) {
+    MultiByteToWideChar(CP_ACP, 0, ansiStr, -1, unicodeStr, unicodeStrSize);
 }
 
 // Освобождение ресурсов
-void CleanupSharedMemory() {
-    if (sharedMemory) {
-        UnmapViewOfFile(sharedMemory);
-        sharedMemory = NULL;
+void CleanupResources() {
+    if (fileData) {
+        UnmapViewOfFile(fileData);
+        fileData = nullptr;
     }
+
     if (hMapping) {
         CloseHandle(hMapping);
         hMapping = NULL;
     }
+
+    if (hFile) {
+        CloseHandle(hFile);
+        hFile = NULL;
+    }
+
+    sharedMemory = NULL;
+    fileSize = 0;
+    phonebookData.clear();
 }
 
-// Запись данных в общую память
-//bool WriteToSharedMemory(const std::vector<PhoneBookEntry>& entries) {
-//    if (!sharedMemory) return false;
-//
-//    std::wstringstream ss;
-//    for (const auto& entry : entries) {
-//        ss << SerializePhoneBookEntry(entry) << L"\n";
-//    }
-//
-//    std::wstring data = ss.str();
-//    if (data.size() * sizeof(wchar_t) > MAX_MEMORY_SIZE) {
-//        MessageBoxW(NULL, L"Недостаточно памяти для записи данных", L"Ошибка", MB_ICONERROR);
-//        return false;
-//    }
-//
-//    memcpy(sharedMemory, data.c_str(), data.size() * sizeof(wchar_t));
-//    sharedMemory[data.size()] = L'\0'; // Завершающий символ
-//    return true;
-//}
-/*
-bool WriteToSharedMemory(const std::wstring& filePath, wchar_t* sharedMemory, size_t maxMemorySize) {
-    std::wifstream file(filePath);
-    if (!file.is_open()) {
-        return false;
-    }
+void ClearSharedMemory() {
+    if (sharedMemory != NULL) {
+        // Зануляем содержимое памяти
+        memset(sharedMemory, 0, fileSize);
 
-    // Читаем содержимое файла
-    std::wstring fileData((std::istreambuf_iterator<wchar_t>(file)),
-        std::istreambuf_iterator<wchar_t>());
-
-    // Проверяем, помещаются ли данные в разделяемую память
-    if (fileData.size() >= maxMemorySize / sizeof(wchar_t)) {
-        return false;
-    }
-
-    // Копируем данные в разделяемую память
-    wcscpy_s(sharedMemory, maxMemorySize / sizeof(wchar_t), fileData.c_str());
-    return true;
-}
-*/
-/*
-void WriteToSharedMemory(wchar_t* sharedMemory, const std::vector<PhoneBookEntry>& phonebookData) {
-    if (sharedMemory == nullptr) {
-        return;
-    }
-
-    size_t index = 0;
-    for (const auto& entry : phonebookData) {
-        // Запись каждого поля структуры в память
-        wcscpy_s(sharedMemory + index, MAX_ENTRY_SIZE, entry.phone.c_str());
-        index += MAX_ENTRY_SIZE;  // Увеличиваем индекс для следующей записи
-
-        wcscpy_s(sharedMemory + index, MAX_ENTRY_SIZE, entry.lastName.c_str());
-        index += MAX_ENTRY_SIZE;
-
-        wcscpy_s(sharedMemory + index, MAX_ENTRY_SIZE, entry.firstName.c_str());
-        index += MAX_ENTRY_SIZE;
-
-        wcscpy_s(sharedMemory + index, MAX_ENTRY_SIZE, entry.patronymic.c_str());
-        index += MAX_ENTRY_SIZE;
-
-        wcscpy_s(sharedMemory + index, MAX_ENTRY_SIZE, entry.street.c_str());
-        index += MAX_ENTRY_SIZE;
-
-        wcscpy_s(sharedMemory + index, MAX_ENTRY_SIZE, entry.house.c_str());
-        index += MAX_ENTRY_SIZE;
-
-        wcscpy_s(sharedMemory + index, MAX_ENTRY_SIZE, entry.building.c_str());
-        index += MAX_ENTRY_SIZE;
-
-        wcscpy_s(sharedMemory + index, MAX_ENTRY_SIZE, entry.apartment.c_str());
-        index += MAX_ENTRY_SIZE;
-    }
-}
-*/
-
-void WriteToSharedMemory(const WCHAR* filename) {
-    // Создаем или открываем объект общей памяти
-    const WCHAR* sharedMemoryName = L"PhoneBookSharedMemory";
-    HANDLE hMapping = CreateFileMappingW(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, MAX_ENTRY_SIZE * MAX_RECORDS, sharedMemoryName);
-    if (hMapping == NULL) {
-        MessageBoxW(NULL, L"Не удалось создать общую память!", L"Ошибка", MB_OK | MB_ICONERROR);
-        return;
-    }
-
-    // Мапим память в адресное пространство
-    void* sharedMemory = MapViewOfFile(hMapping, FILE_MAP_WRITE, 0, 0, 0);
-    if (sharedMemory == NULL) {
-        MessageBoxW(NULL, L"Не удалось отобразить память в адресное пространство!", L"Ошибка", MB_OK | MB_ICONERROR);
-        CloseHandle(hMapping);
-        return;
-    }
-
-    // Открываем файл и считываем данные
-    std::wifstream file(filename);
-    if (!file.is_open()) {
-        MessageBoxW(NULL, L"Не удалось открыть файл!", L"Ошибка", MB_OK | MB_ICONERROR);
+        // Удаляем отображение памяти
         UnmapViewOfFile(sharedMemory);
+        sharedMemory = NULL;
+    }
+
+    if (hMapping != NULL) {
+        // Закрываем объект проецирования
         CloseHandle(hMapping);
-        return;
+        hMapping = NULL;
     }
 
-    // Читаем данные из файла и записываем в общую память
-    PhoneBookEntry* entries = (PhoneBookEntry*)sharedMemory;
-    int index = 0;
-    std::wstring line;
-    while (std::getline(file, line) && index < MAX_RECORDS) {
-        std::wstringstream ss(line);
-        std::getline(ss, entries[index].phone, L';');
-        std::getline(ss, entries[index].lastName, L';');
-        std::getline(ss, entries[index].firstName, L';');
-        std::getline(ss, entries[index].patronymic, L';');
-        std::getline(ss, entries[index].street, L';');
-        std::getline(ss, entries[index].house, L';');
-        std::getline(ss, entries[index].building, L';');
-        std::getline(ss, entries[index].apartment, L';');
-        index++;
+    // Полностью удаляем объект проецирования
+    HANDLE hTempMapping = OpenFileMappingW(FILE_MAP_WRITE, FALSE, sharedMemoryName);
+    if (hTempMapping != NULL) {
+        CloseHandle(hTempMapping);
+        DeleteFileW(sharedMemoryName); // Удаление файла, если он связан с объектом
     }
 
-    // Закрываем все
+    // Сбрасываем метаданные
+    fileSize = 0;
+}
+
+// Проверка на наличие данных в общей памяти
+bool IsSharedMemoryEmpty(HWND hwnd) {
+
+    // Подключаемся к существующему объекту общей памяти
+    HANDLE hMapping = OpenFileMappingW(FILE_MAP_READ, FALSE, sharedMemoryName);
+    if (hMapping == NULL) {
+        MessageBoxW(hwnd, L"Не удалось подключиться к общей памяти!", L"Ошибка", MB_OK | MB_ICONERROR);
+        return true; // Если памяти нет, считаем её "пустой"
+    }
+
+    // Мапим память в адресное пространство процесса
+    wchar_t* sharedMemory = (wchar_t*)MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0);
+    if (sharedMemory == NULL) {
+        MessageBoxW(hwnd, L"Не удалось отобразить память в адресное пространство!", L"Ошибка", MB_OK | MB_ICONERROR);
+        CloseHandle(hMapping);
+        return true; // Если не удалось отобразить, считаем её пустой
+    }
+
+    // Проверяем, есть ли данные (проверка на пустую строку)
+    bool isEmpty = (sharedMemory[0] == L'\0');
+
+    // Закрываем ресурсы
     UnmapViewOfFile(sharedMemory);
     CloseHandle(hMapping);
+
+    return isEmpty;
 }
 
+// Десериализация записей справочника в массив сущностей
+vector<PhoneBookEntry> ParsePhoneBookData(const wstring& sharedMemoryContent) {
+    vector<PhoneBookEntry> phonebookData;
+    wistringstream stream(sharedMemoryContent);
+    wstring line;
 
+    while (getline(stream, line)) {
+        if (line.empty()) continue; // Пропускаем пустые строки
 
-// Чтение данных из общей памяти
-//std::vector<PhoneBookEntry> ReadFromSharedMemory() {
-//    std::vector<PhoneBookEntry> entries;
-//
-//    if (!sharedMemory) return entries;
-//
-//    std::wstring data(sharedMemory);
-//    std::wstringstream ss(data);
-//    std::wstring line;
-//
-//    while (std::getline(ss, line)) {
-//        if (!line.empty()) {
-//            entries.push_back(DeserializePhoneBookEntry(line));
-//        }
-//    }
-//
-//    return entries;
-//}
+        wstringstream ss(line);
+        wstring phone, lastName, firstName, patronymic, street, house, building, apartment;
+
+        // Разделяем строку по символу 'delimeter'
+        getline(ss, phone, delimeter);
+        getline(ss, lastName, delimeter);
+        getline(ss, firstName, delimeter);
+        getline(ss, patronymic, delimeter);
+        getline(ss, street, delimeter);
+        getline(ss, house, delimeter);
+        getline(ss, building, delimeter);
+        getline(ss, apartment, delimeter);
+
+        // Создаём объект PhoneBookEntry
+        PhoneBookEntry entry = {
+            phone, lastName, firstName, patronymic,
+            street, house, building, apartment
+        };
+
+        phonebookData.push_back(entry);
+    }
+
+    return phonebookData;
+}
+
+// Получение списка записей справочника из общей памяти
+vector<PhoneBookEntry> LoadDatabaseFromMemory(HWND hwndListView) {
+    HANDLE hMapping = OpenFileMappingW(FILE_MAP_READ, FALSE, sharedMemoryName);
+
+    if (!hMapping) {
+        MessageBoxW(hwndListView, L"Не удалось подключиться к общей памяти!", L"Ошибка", MB_OK | MB_ICONERROR);
+        return {};
+    }
+
+    wchar_t* sharedMemory = static_cast<wchar_t*>(MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0));
+    if (!sharedMemory) {
+        MessageBoxW(hwndListView, L"Не удалось отобразить файл в адресное пространство!", L"Ошибка", MB_OK | MB_ICONERROR);
+        CloseHandle(hMapping);
+        return {};
+    }
+
+    wstring sharedMemoryContent(sharedMemory);
+    UnmapViewOfFile(sharedMemory);
+    CloseHandle(hMapping);
+
+    return ParsePhoneBookData(sharedMemoryContent);
+}
+
+// Функция поиска записей по указанному полю
+vector<PhoneBookEntry> SearchByField(const wstring& value, const vector<PhoneBookEntry>& phonebookData, int fieldIndex) {
+    vector<PhoneBookEntry> results;
+
+    for (const auto& record : phonebookData) {
+
+        // Проверяем поле на основе индекса
+        bool match = false;
+
+        switch (fieldIndex) {
+        case 0: // Поиск по всем полям
+            match = record.phone.find(value) != wstring::npos ||
+                record.lastName.find(value) != wstring::npos ||
+                record.firstName.find(value) != wstring::npos ||
+                record.patronymic.find(value) != wstring::npos ||
+                record.street.find(value) != wstring::npos ||
+                record.house.find(value) != wstring::npos ||
+                record.building.find(value) != wstring::npos ||
+                record.apartment.find(value) != wstring::npos;
+            break;
+        case 1: // Телефон
+            match = record.phone.find(value) != wstring::npos;
+            break;
+        case 2: // Фамилия
+            match = record.lastName.find(value) != wstring::npos;
+            break;
+        case 3: // Имя
+            match = record.firstName.find(value) != wstring::npos;
+            break;
+        case 4: // Отчество
+            match = record.patronymic.find(value) != wstring::npos;
+            break;
+        case 5: // Улица
+            match = record.street.find(value) != wstring::npos;
+            break;
+        case 6: // Дом
+            match = record.house.find(value) != wstring::npos;
+            break;
+        case 7: // Корпус
+            match = record.building.find(value) != wstring::npos;
+            break;
+        case 8: // Квартира
+            match = record.apartment.find(value) != wstring::npos;
+            break;
+        }
+
+        // Если найдено совпадение, добавляем запись в результаты
+        if (match) {
+            results.push_back(record);
+        }
+    }
+
+    return results; // Возвращаем найденные записи
+}

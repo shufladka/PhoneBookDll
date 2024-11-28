@@ -148,6 +148,7 @@
     <ResourceCompile Include="PhoneBook.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="icon.ico" />
     <Image Include="PhoneBook.ico" />
     <Image Include="small.ico" />
   </ItemGroup>
